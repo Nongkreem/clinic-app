@@ -1,7 +1,11 @@
 // frontend/src/App.jsx
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
+
+// Layouts
+import TopNavbarLayout from './layouts/TopNavbarLayout.jsx';
+import StaffDashboardLayout from './layouts/StaffDashboardLayout.jsx.jsx'
 
 // Pages
 import Home from './pages/Home';
@@ -9,11 +13,18 @@ import About from './pages/About';
 import Service from './pages/Service';
 import Login from './pages/Login';
 import Register from './pages/Register'; // เพิ่ม Register Page
-import PatientDashboard from './pages/PatientDashboard';
-import DoctorDashboard from './pages/DoctorDashboard';
-import NurseDashboard from './pages/NurseDashboard';
-import HeadNurseDashboard from './pages/HeadNurseDashboard';
+import PatientDashboard from './pages/patient/PatientDashboard';
+import DoctorDashboard from './pages/doctor/DoctorDashboard';
+import NurseDashboard from './pages/nurse/NurseDashboard';
+import HeadNurseDashboard from './pages/head-nurse/HeadNurseDashboard';
+
+// Components
 import Button from './components/common/Button';
+import DoctorsManage from './pages/nurse/DoctorsManage.jsx';
+import ServiceManage from './pages/nurse/ServiceManage.jsx';
+import GuideManage from './pages/nurse/GuideManage.jsx';
+
+
 // omponent สำหรับ Protected Route
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { isAuthenticated, loading, user } = useAuth();
@@ -31,7 +42,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
   if (!isAuthenticated) {
     // ถ้ายังไม่ได้ Login ให้ redirect ไปหน้า Login
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   if (allowedRoles && !allowedRoles.includes(user?.role)) {
@@ -44,6 +55,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
 function App() {
   const { isAuthenticated, loading, user } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -56,49 +68,39 @@ function App() {
     );
   }
 
+  const hideNavbar = ['/login', '/register'].includes(location.pathname)
   return (
-    <div className="App font-sans antialiased text-gray-900">
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/service" element={<Service />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} /> {/* เพิ่ม Register Route */}
+    <div className="">
 
-        {/* Protected Routes สำหรับแต่ละบทบาท */}
-        <Route
-          path="/patient-dashboard"
-          element={
-            <ProtectedRoute allowedRoles={['patient']}>
-              <PatientDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/doctor-dashboard"
-          element={
-            <ProtectedRoute allowedRoles={['doctor', 'admin']}>
-              <DoctorDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/nurse-dashboard"
-          element={
-            <ProtectedRoute allowedRoles={['nurse', 'head_nurse', 'admin']}>
-              <NurseDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/head-nurse-dashboard"
-          element={
-            <ProtectedRoute allowedRoles={['head_nurse', 'admin']}>
-              <HeadNurseDashboard />
-            </ProtectedRoute>
-          }
-        />
+      <Routes>
+        {/* Layout มี navbar */}
+        <Route element={<TopNavbarLayout />}>
+          <Route index element={<Home />} /> {/* หน้า '/' */}
+          <Route path="about" element={<About />} />
+          <Route path="login" element={<Login />} />
+          <Route path="register" element={<Register />} />
+
+          {/* Patient Routes */}
+          <Route path="patient">
+            <Route path="home" element={<PatientDashboard />} />
+          </Route>
+        </Route>
+
+        {/* Layout สำหรับ Dashboard ของบุคลากร (มี Sidebar) */}
+        <Route element={<ProtectedRoute allowedRoles={['doctor', 'nurse', 'head_nurse']}><StaffDashboardLayout /></ProtectedRoute>} >
+          <Route path="doctor-dashboard" element={<DoctorDashboard />} />
+
+          <Route path="nurse-dashboard" element={<Navigate to = "/nurse-dashboard/services" replace/>} />
+          <Route path="nurse-dashboard/*" element={<NurseDashboard/>}>
+            <Route path="services" element={<ServiceManage/>}/>
+            <Route path="doctors" element={<DoctorsManage/>}/>
+            <Route path="guide" element={<GuideManage/>}/>
+            <Route path="*" element={<Navigate to="services" replace />} /> {/* Fallback สำหรับ /nurse-dashboard/unknown-path */}
+          </Route>
+          
+          <Route path="headnurse-dashboard" element={<HeadNurseDashboard />} />
+        </Route>
+
 
         {/* หน้า Unauthorized (ถ้าผู้ใช้ไม่มีสิทธิ์) */}
         <Route path="/unauthorized" element={

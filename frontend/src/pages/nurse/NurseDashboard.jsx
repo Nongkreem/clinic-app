@@ -1,0 +1,18 @@
+//nurse layout
+import React from 'react'
+import DoctorsManage from './DoctorsManage'
+import ServiceManage from './ServiceManage'
+import { Outlet } from 'react-router-dom'
+
+const NurseDashboard = () => {
+  return (
+    <div>
+      {/* Child Route */}
+      <div>
+        <Outlet/>
+      </div>
+    </div>
+  )
+}
+
+export default NurseDashboard

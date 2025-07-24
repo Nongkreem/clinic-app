@@ -23,11 +23,12 @@ export default {
         primary: {
           default: '#25533F',
           light: '#ddeee2',
+          darklight: "#A4B6AE",
           dark: '#0e2019'
         },
         secondary: {
           default: '#b07c19',
-          light: '#e1b92e',
+          light: '#DAC7A2',
           dark: '#3b200d'
         }
       },

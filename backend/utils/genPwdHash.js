@@ -6,4 +6,4 @@ async function generateHash(password) {
   console.log(hash);
 }
 
-generateHash('doctor1234');
+generateHash('nurse1234');

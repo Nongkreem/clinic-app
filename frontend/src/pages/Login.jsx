@@ -27,7 +27,7 @@ const Login = () => {
       if (user) {
         switch (user.role) {
           case 'patient':
-            navigate('/patient-dashboard');
+            navigate('/patient/home')
             break;
           case 'doctor':
             navigate('/doctor-dashboard');
@@ -55,7 +55,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
         <h2 className="text-3xl font-bold text-center text-blue-600 mb-8">เข้าสู่ระบบ</h2>
         <form onSubmit={handleSubmit}>
