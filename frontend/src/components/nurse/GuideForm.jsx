@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import FormGroup from './common/FormGroup';
-import Button from './common/Button';
+import FormGroup from '../common/FormGroup';
+import Button from '../common/Button';
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';

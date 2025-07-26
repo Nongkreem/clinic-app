@@ -18,10 +18,12 @@ import DoctorDashboard from './pages/doctor/DoctorDashboard';
 import NurseDashboard from './pages/nurse/NurseDashboard';
 import HeadNurseDashboard from './pages/head-nurse/HeadNurseDashboard';
 
+// Specific Pages for Nures
+import ServiceManage from './pages/nurse/ServiceManage.jsx';
+import DoctorsManage from './pages/nurse/DoctorsManage.jsx';
+
 // Components
 import Button from './components/common/Button';
-import DoctorsManage from './pages/nurse/DoctorsManage.jsx';
-import ServiceManage from './pages/nurse/ServiceManage.jsx';
 import GuideManage from './pages/nurse/GuideManage.jsx';
 
 

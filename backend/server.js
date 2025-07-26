@@ -34,9 +34,11 @@ app.use(bodyParser.json());
 // --- Routes ---
 const authRoutes = require('./routes/authRoutes');
 const guideRoutes = require('./routes/guideRoutes')
+const serviceRoutes = require('./routes/serviceRoutes')
 
 app.use('/api/auth', authRoutes); // กำหนด prefix /api/auth สำหรับ Auth Routes
 app.use('/api/guide', guideRoutes);
+app.use('/api', serviceRoutes);
 
 // --- ทดสอบ Protected Route (ต้อง Login ก่อน) ---
 const { authenticateToken } = require('./middleware/authMiddleware');
