@@ -144,10 +144,10 @@ const ManagePageTemplate = ({
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {items.map((item) => (
+              {items.map((item, index) => (
                 // renderTableRow จะรับ item, handleEditItem, handleDeleteItem ไปสร้างแต่ละแถว
                 <React.Fragment key={item[itemIdentifierKey]}>
-                  {renderTableRow(item, handleEditItem, handleDeleteItem)}
+                  {renderTableRow(item, index ,handleEditItem, handleDeleteItem)}
                 </React.Fragment>
               ))}
             </tbody>

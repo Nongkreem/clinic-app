@@ -1,56 +1,50 @@
 import React, { useState, useEffect } from 'react';
-import FormGroup from '../common/FormGroup';
-import Button from '../common/Button';
-import axios from 'axios';
-import { Plus, Trash2 } from 'lucide-react'; // นำเข้าไอคอน Plus และ Trash2
+import FormGroup from "../common/FormGroup";
+import Button from "../common/Button";
+import axios from "axios";
+import { Plus, Trash2 } from "lucide-react";
 
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
+const API_BASE_URL =
+  import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";
 
+const ClinicRoomForm = ({ initialData, onSaveSuccess, onCancel }) => {
+  const [roomName, setRoomName] = useState("");
 
-const DoctorForm = ({ initialData, onSaveSuccess, onCancel }) => {
-  const [doctorId, setDoctorId] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
-  // selectedServiceEntries: เก็บรายการของ { tempId: uniqueId, serviceId: 'value', serviceName: 'label' }
   const [selectedServiceEntries, setSelectedServiceEntries] = useState([]);
-  const [allServiceOptions, setAllServiceOptions] = useState([]); // ตัวเลือกบริการทั้งหมด
+  const [allServiceOptions, setAllServiceOptions] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
-  // Effect สำหรับดึงตัวเลือกบริการทั้งหมดจาก Backend
   useEffect(() => {
     const fetchServiceOptions = async () => {
       try {
         const response = await axios.get(`${API_BASE_URL}/api/services`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
-        setAllServiceOptions(response.data.map(item => ({
-          value: item.service_id.toString(),
-          label: item.service_name
-        })));
+        setAllServiceOptions(
+          response.data.map((item) => ({
+            value: item.service_id.toString(),
+            label: item.service_name,
+          }))
+        );
       } catch (err) {
-        console.error('Failed to fetch service options:', err);
-        setError('ไม่สามารถโหลดตัวเลือกบริการได้');
+        console.error("Failed to fetch service options:", err);
+        setError("ไม่สามารถโหลดตัวเลือกบริการได้");
       }
     };
     fetchServiceOptions();
   }, []);
 
-  // Effect สำหรับตั้งค่าข้อมูลเริ่มต้นเมื่อ initialData เปลี่ยน (สำหรับการแก้ไข)
   useEffect(() => {
     if (initialData) {
-      setDoctorId(initialData.doctor_id || '');
-      setFullName(initialData.full_name || '');
-      setPhone(initialData.phone_number || '');
-      setEmail(initialData.email || '');
+      setRoomName(initialData.room_name || "");
       // โหลดบริการที่เลือกไว้เดิม
       if (initialData.services && Array.isArray(initialData.services)) {
         setSelectedServiceEntries(
-          initialData.services.map(service => ({
+          initialData.services.map((service) => ({
             tempId: crypto.randomUUID(), // สร้าง tempId สำหรับ key
             serviceId: service.service_id.toString(),
-            serviceName: service.service_name
+            serviceName: service.service_name,
           }))
         );
       } else {
@@ -58,13 +52,10 @@ const DoctorForm = ({ initialData, onSaveSuccess, onCancel }) => {
       }
     } else {
       // สำหรับการเพิ่มใหม่, เคลียร์ฟอร์ม
-      setDoctorId('');
-      setFullName('');
-      setPhone('');
-      setEmail('');
+      setRoomName("");
       setSelectedServiceEntries([]);
     }
-    setError('');
+    setError("");
   }, [initialData]);
 
   // ฟังก์ชันสำหรับเพิ่มช่องเลือกบริการใหม่
@@ -120,59 +111,37 @@ const DoctorForm = ({ initialData, onSaveSuccess, onCancel }) => {
       .filter(id => !isNaN(id)); // กรองเฉพาะ ID ที่ถูกต้อง
 
     // Validation
-    if (!fullName.trim() || serviceIdsToSend.length === 0) {
-      setError('กรุณากรอกชื่อเต็มและเลือกบริการที่ให้ได้อย่างน้อยหนึ่งรายการ');
-      setLoading(false);
-      return;
-    }
-    if (!initialData) {
-      // ตรวจสอบความยาวรวมต้องเป็น 6 และรูปแบบต้องขึ้นต้นด้วย D ตามด้วยตัวเลข 5 หลัก
-      if (doctorId.length !== 6 || !/^D\d{5}$/.test(doctorId)) {
-        setError('รหัสประจำตัวแพทย์ต้องขึ้นต้นด้วย D และตามด้วยตัวเลข 5 หลัก');
-        setLoading(false);
-        return;
-      }
-    }
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError('รูปแบบอีเมลไม่ถูกต้อง');
-      setLoading(false);
-      return;
-    }
-    if (phone && !/^\d{9,10}$/.test(phone)) { // ตัวอย่าง: 9 หรือ 10 หลัก
-      setError('รูปแบบเบอร์โทรศัพท์ไม่ถูกต้อง (ตัวเลข 9-10 หลัก)');
+    if (!roomName.trim() || serviceIdsToSend.length === 0) {
+      setError('กรุณากรอกชื่อห้องและเลือกบริการที่ให้ได้อย่างน้อยหนึ่งรายการ');
       setLoading(false);
       return;
     }
 
-    const doctorData = {
-      doctor_id: doctorId.trim(),
-      full_name: fullName.trim(),
-      phone_number: phone.trim(),
-      email: email.trim(),
+    const roomData = {
+      room_name: roomName.trim(),
       service_ids: serviceIdsToSend,
     };
-    console.log('Doctor data sent to backend:', doctorData); // <--- เพิ่มบรรทัดนี้
-
     try {
-      if (initialData && initialData.doctor_id) {
+      if (initialData && initialData.room_id) {
         // อัปเดตแพทย์
-        await axios.put(`${API_BASE_URL}/api/doctors/${initialData.doctor_id}`, doctorData, {
+        await axios.put(`${API_BASE_URL}/api/rooms/${initialData.room_id}`, roomData, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
       } else {
         // สร้างแพทย์ใหม่
-        await axios.post(`${API_BASE_URL}/api/doctors`, doctorData, {
+        await axios.post(`${API_BASE_URL}/api/rooms`, roomData, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
       }
       onSaveSuccess(); // แจ้ง Parent ว่าบันทึกสำเร็จ
     } catch (err) {
-      console.error('Error saving doctor:', err);
-      setError(err.response?.data?.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูลแพทย์');
+      console.error('Error saving room:', err);
+      setError(err.response?.data?.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูลห้องตรวจได้');
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <form onSubmit={handleSubmit}>
@@ -182,61 +151,22 @@ const DoctorForm = ({ initialData, onSaveSuccess, onCancel }) => {
         </div>
       )}
 
-      {/* รหัสประจำตัวแพทย์ (อ่านอย่างเดียวในโหมดแก้ไข) */}
       <FormGroup
-        label="รหัสประจำตัวแพทย์ (6 หลัก)"
+        label="ชื่อห้องตรวจ"
         type="text"
-        id="doctorId"
-        name="doctorId"
-        value={doctorId}
-        onChange={(e) => setDoctorId(e.target.value)}
-        placeholder="รหัสประจำตัวแพทย์ (ขึ้นต้นด้วย D ตามด้วยตัวเลข 5 หลัก)"
-        readOnly={!!initialData} // อ่านอย่างเดียวถ้าอยู่ในโหมดแก้ไข
+        id="roomName"
+        name="roomName"
+        value={roomName}
+        onChange={(e) => setRoomName(e.target.value)}
+        placeholder="เช่น ห้องตรวจทั่วไป"
         required
         className="mb-4"
       />
 
-      {/* ชื่อเต็ม */}
-      <FormGroup
-        label="ชื่อเต็ม (มีคำนำหน้าชื่อ)"
-        type="text"
-        id="fullName"
-        name="fullName"
-        value={fullName}
-        onChange={(e) => setFullName(e.target.value)}
-        placeholder="เช่น พญ. สมศรี ใจดี"
-        required
-        className="mb-4"
-      />
-
-      {/* เบอร์โทรศัพท์ */}
-      <FormGroup
-        label="เบอร์โทรศัพท์"
-        type="tel" // ใช้ type="tel" สำหรับเบอร์โทร
-        id="phone"
-        name="phone"
-        value={phone}
-        onChange={(e) => setPhone(e.target.value)}
-        placeholder="เช่น 0812345678"
-        className="mb-4"
-      />
-
-      {/* อีเมล */}
-      <FormGroup
-        label="อีเมล"
-        type="email"
-        id="email"
-        name="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="เช่น doctor.name@example.com"
-        className="mb-4"
-      />
-
-      {/* ส่วนสำหรับจัดการบริการที่แพทย์ให้แบบ Dynamic */}
+      {/* จัดการบริการ */}
       <div className="mb-4">
         <label className="block text-gray-700 text-sm font-bold mb-2">
-          บริการที่แพทย์ให้ <span className="text-red-500">*</span>
+          บริการที่รองรับ <span className="text-red-500">*</span>
         </label>
         {selectedServiceEntries.map((entry, index) => (
           <div key={entry.tempId} className="flex items-center gap-2 mb-2">
@@ -296,4 +226,4 @@ const DoctorForm = ({ initialData, onSaveSuccess, onCancel }) => {
   );
 };
 
-export default DoctorForm;
+export default ClinicRoomForm;

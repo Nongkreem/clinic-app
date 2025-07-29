@@ -16,9 +16,9 @@ const ServiceManage = () => {
 
 
   // ฟังก์ชันสำหรับ Render แต่ละแถวของตาราง (ส่งให้ ManagePageTemplate)
-  const renderServiceTableRow = (service, handleEdit, handleDelete) => (
+  const renderServiceTableRow = (service, index, handleEdit, handleDelete) => (
     <tr key={service.service_id} className="hover:bg-gray-50">
-      <td className="py-3 px-4 whitespace-nowrap text-sm text-gray-700">{service.service_id}</td>
+      <td className="py-3 px-4 whitespace-nowrap text-sm text-gray-700">{index + 1}</td>
       {/* ไม่มี service.service_code แล้ว */}
       <td className="py-3 px-4 text-sm text-gray-700">{service.service_name}</td>
       <td className="py-3 px-4 text-sm text-gray-700">{service.description}</td>

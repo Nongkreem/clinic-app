@@ -11,9 +11,9 @@ const GuideManage = () => {
   ];
 
     // ฟังก์ชันสำหรับ Render แต่ละแถวของตาราง (ส่งให้ Template)
-  const renderGuidanceTableRow = (guidance, handleEdit, handleDelete) => (
+  const renderGuidanceTableRow = (guidance, index, handleEdit, handleDelete) => (
     <tr key={guidance.advice_id} className="hover:bg-gray-50">
-      <td className="py-3 px-4 whitespace-nowrap text-sm text-gray-700">{guidance.advice_id}</td>
+      <td className="py-3 px-4 whitespace-nowrap text-sm text-gray-700">{index + 1}</td>
       <td className="py-3 px-4 text-sm text-gray-700">{guidance.advice_text}</td>
       <td className="py-3 px-4 whitespace-nowrap text-sm">
         <div className="flex space-x-2">

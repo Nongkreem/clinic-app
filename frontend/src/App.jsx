@@ -21,10 +21,11 @@ import HeadNurseDashboard from './pages/head-nurse/HeadNurseDashboard';
 // Specific Pages for Nures
 import ServiceManage from './pages/nurse/ServiceManage.jsx';
 import DoctorsManage from './pages/nurse/DoctorsManage.jsx';
+import GuideManage from './pages/nurse/GuideManage.jsx';
+import ClinicRoomManage from './pages/nurse/ClinicRoomManage.jsx';
 
 // Components
 import Button from './components/common/Button';
-import GuideManage from './pages/nurse/GuideManage.jsx';
 
 
 // omponent สำหรับ Protected Route
@@ -97,6 +98,7 @@ function App() {
             <Route path="services" element={<ServiceManage/>}/>
             <Route path="doctors" element={<DoctorsManage/>}/>
             <Route path="guide" element={<GuideManage/>}/>
+            <Route path="examination-room" element={<ClinicRoomManage/>}/>
             <Route path="*" element={<Navigate to="services" replace />} /> {/* Fallback สำหรับ /nurse-dashboard/unknown-path */}
           </Route>
           
