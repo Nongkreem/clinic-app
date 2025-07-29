@@ -19,13 +19,13 @@ const GuideManage = () => {
         <div className="flex space-x-2">
           <button
             onClick={() => handleEdit(guidance)}
-            className="px-3 py-1 text-xs bg-primary-default text-white rounded-lg hover:bg-blue-600 transition duration-200"
+            className="px-3 py-1 text-xs bg-primary-default text-white rounded-lg hover:bg-primary-dark transition duration-200"
           >
             แก้ไข
           </button>
           <button
             onClick={() => handleDelete(guidance.advice_id)}
-            className="px-3 py-1 text-xs bg-secondary-default text-white rounded-lg hover:bg-red-600 transition duration-200"
+            className="px-3 py-1 text-xs bg-secondary-default text-white rounded-lg hover:bg-secondary-dark transition duration-200"
           >
             ลบ
           </button>
