@@ -1,5 +1,19 @@
 const db = require('../config/db');
 
+const generateTimeSlots = (startTime, endTime) => {
+    const slots = [];
+    let current = new Date(`2000-01-01T${startTime}`);
+    const end = new Date(`2000-01-01T${endTime}`);
+
+    while (current < end) {
+        const slotStart = current.toTimeString().slice(0, 8);
+        current.setMinutes(current.getMinutes() + 15);
+        const slotEnd = current.toTimeString().slice(0, 8);
+        slots.push({ slot_start: slotStart, slot_end: slotEnd });
+    }
+    return slots;
+};
+
 exports.createRoom = async ({ room_name, service_ids}) => {
   const connection = await db.getConnection();
   try {
@@ -65,7 +79,7 @@ exports.updateRoom = async (room_id, { room_name, service_ids }) => {
 
     // 1. Update examRoom table
     const [updateRoomResult] = await connection.execute(
-      'UPDATE examRoom SET room_name = ?, WHERE room_id = ?',
+      'UPDATE examRoom SET room_name = ? WHERE room_id = ?',
       [room_name, room_id]
     );
 
@@ -82,7 +96,7 @@ exports.updateRoom = async (room_id, { room_name, service_ids }) => {
     }
 
     await connection.commit();
-    return examRoomServiceValues.affectedRows > 0;
+    return updateRoomResult.affectedRows > 0;
   } catch (error) {
     await connection.rollback();
     console.error('Error updating examination room:', error);
@@ -113,4 +127,54 @@ exports.deleteRoom = async (room_id) => {
   } finally {
     connection.release();
   }
+};
+
+exports.getRoomsByService = async (serviceId) => {
+  try {
+    const [rooms] = await db.execute(
+      `SELECT er.room_id, er.room_name
+       FROM examRoom er
+       JOIN examRoomService ers ON er.room_id = ers.room_id
+       WHERE ers.service_id = ?
+       ORDER BY er.room_name`,
+      [serviceId]
+    );
+    return rooms;
+  } catch (error) {
+    console.error('Error fetching rooms by service:', error);
+    throw error;
+  }
+};
+
+exports.getAvailableRoomsByTime = async (scheduleDate, timeStart, timeEnd, serviceId) => {
+    try {
+        const query = `
+            SELECT DISTINCT er.room_id, er.room_name
+            FROM examRoom er  -- ✅ ใช้ชื่อตารางตามที่คุณยืนยัน
+            JOIN examRoomService ersrv ON er.room_id = ersrv.room_id -- ✅ ใช้ชื่อตารางตามที่คุณยืนยัน
+            WHERE ersrv.service_id = ?
+              AND er.room_id NOT IN (
+                  SELECT ds.room_id
+                  FROM doctorSchedules ds  -- ✅ ใช้ชื่อตารางตามที่คุณยืนยัน
+                  WHERE ds.schedule_date = ?
+                    AND (
+                          ds.time_start < ? AND ds.time_end > ?
+                        )
+              )
+            ORDER BY er.room_name`;
+        
+        const params = [serviceId, scheduleDate, timeEnd, timeStart];
+
+        console.log(`[ClinicRoom Model] getAvailableRoomsByTime Query:`);
+        console.log(query);
+        console.log(`[ClinicRoom Model] getAvailableRoomsByTime Params:`, params);
+        
+        const [rooms] = await db.execute(query, params);
+        
+        console.log(`[ClinicRoom Model] getAvailableRoomsByTime Result:`, rooms);
+        return rooms;
+    } catch (error) {
+        console.error('Error fetching available rooms by time:', error);
+        throw error;
+    }
 };

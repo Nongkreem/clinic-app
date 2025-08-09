@@ -15,7 +15,7 @@ const DoctorsManage = () => {
   ];
 
   // ฟังก์ชันสำหรับ Render แต่ละแถวของตาราง (ส่งให้ ManagePageTemplate)
-  const renderDoctorTableRow = (doctor, handleEdit, handleDelete) => (
+  const renderDoctorTableRow = (doctor, index, handleEdit, handleDelete) => (
     <tr key={doctor.doctor_id} className="hover:bg-gray-50">
       <td className="py-3 px-4 whitespace-nowrap text-sm text-gray-700">{doctor.doctor_id}</td>
       <td className="py-3 px-4 whitespace-nowrap text-sm text-gray-700">{doctor.full_name}</td>

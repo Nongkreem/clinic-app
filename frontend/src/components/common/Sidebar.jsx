@@ -17,7 +17,8 @@ const menuByRole = {
         { label: "ข้อมูลบริการ", path: "/nurse-dashboard/services" },
         { label: "ข้อมูลแพทย์", path: "/nurse-dashboard/doctors" },
         { label: "คำแนะนำการเตรียมตัว", path: "/nurse-dashboard/guide" },
-        { label: "ข้อมูลห้องตรวจ", path: "/nurse-dashboard/examination-room" }
+        { label: "ข้อมูลห้องตรวจ", path: "/nurse-dashboard/examination-room" },
+        { label: "ข้อมูลตารางออกตรวจ", path: "/nurse-dashboard/schedules" }
       ]
     },
     { type: 'collapsible', label: 'จัดการนัดหมาย', key: 'appointmentManagement',
@@ -78,7 +79,7 @@ export default function Sidebar() {
           </button>
           {/* Render sub-items only if main sidebar is open AND this collapsible section is open */}
           {isSidebarOpen && isOpen && (
-            <ul className="ml-4 mt-2 border-l border-stromboli-300 pl-4 space-y-2">
+            <ul className="ml-4 mt-2 border-l border-stromboli-600 pl-4 space-y-2">
               {item.subItems.map(subItem => {
                 const SubIconComponent = subItem.icon;
                 return (

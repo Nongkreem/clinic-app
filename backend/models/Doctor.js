@@ -121,12 +121,14 @@ exports.updateDoctor = async (doctor_id, { full_name, phone_number, email, servi
  */
 exports.deleteDoctor = async (doctor_id) => {
   const connection = await db.getConnection();
+  console.log('Delete doctor id : ', doctor_id)
   try {
     await connection.beginTransaction();
 
-    // 1. Delete from doctorService (ON DELETE CASCADE ใน DB schema ก็ช่วยได้)
+    // 1. Delete doctor from all table has delete cascade
     await connection.execute('DELETE FROM doctorService WHERE doctor_id = ?', [doctor_id]);
-
+     
+    await connection.execute('DELETE FROM doctorSchedules WHERE doctor_id = ?', [doctor_id]);
     // 2. Delete from doctors table
     const [result] = await connection.execute('DELETE FROM doctors WHERE doctor_id = ?', [doctor_id]);
 
@@ -138,5 +140,22 @@ exports.deleteDoctor = async (doctor_id) => {
     throw error;
   } finally {
     connection.release();
+  }
+};
+
+exports.getDoctorsByService = async (serviceId) => {
+  try {
+    const [doctors] = await db.execute(
+      `SELECT d.doctor_id, d.full_name
+       FROM doctors d
+       JOIN doctorService ds ON d.doctor_id = ds.doctor_id
+       WHERE ds.service_id = ?
+       ORDER BY d.full_name`,
+      [serviceId]
+    );
+    return doctors;
+  } catch (error) {
+    console.error('Error fetching doctors by service:', error);
+    throw error;
   }
 };

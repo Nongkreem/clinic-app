@@ -24,6 +24,7 @@ exports.createRoom = async (req, res) => {
 exports.getAllRooms = async (req, res) => {
   try {
     const rooms = await Room.getAllRooms();
+    console.log('Sending rooms to frontend:', rooms); // ✅ เพิ่ม Log
     res.status(200).json(rooms);
   } catch (error) {
     console.error('Error in getAllRooms controller:', error);
@@ -66,4 +67,40 @@ exports.deleteRoom = async (req, res) => {
     console.error('Error in deleteRoom controller:', error);
     res.status(500).json({ message: 'เกิดข้อผิดพลาดในการลบข้อมูลห้องตรวจ' });
   }
+};
+
+exports.getRoomsByService = async (req, res) => {
+  const { serviceId } = req.params; // ดึง serviceId จาก URL parameter
+  console.log('test serviceId: ', serviceId);
+  try {
+    const rooms = await Room.getRoomsByService(parseInt(serviceId, 10));
+    res.status(200).json(rooms);
+  } catch (error) {
+    console.error('Error in getRoomsByService controller:', error);
+    res.status(500).json({ message: 'ไม่สามารถดึงข้อมูลห้องตรวจตามบริการได้' });
+  }
+};
+
+exports.getAvailableRoomsByTime = async (req, res) => {
+    const { scheduleDate, timeStart, timeEnd, serviceId } = req.query;
+
+    if (!scheduleDate || !timeStart || !timeEnd || !serviceId) {
+        return res.status(400).json({ message: 'ต้องระบุวันที่, ช่วงเวลา, และบริการ' });
+    }
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(scheduleDate) || !/^\d{2}:\d{2}$/.test(timeStart) || !/^\d{2}:\d{2}$/.test(timeEnd)) {
+        return res.status(400).json({ message: 'รูปแบบวันที่หรือเวลาไม่ถูกต้อง (YYYY-MM-DD, HH:MM)' });
+    }
+    const parsedServiceId = parseInt(serviceId, 10);
+    if (isNaN(parsedServiceId)) {
+        return res.status(400).json({ message: 'รหัสบริการไม่ถูกต้อง' });
+    }
+
+    try {
+        const rooms = await Room.getAvailableRoomsByTime(scheduleDate, timeStart + ':00', timeEnd + ':00', parsedServiceId); // Add ':00' for SS
+        res.status(200).json(rooms);
+    } catch (error) {
+        console.error('Error in getAvailableRoomsByTime controller:', error);
+        res.status(500).json({ message: 'ไม่สามารถดึงข้อมูลห้องตรวจที่ว่างได้' });
+    }
 };

@@ -1,67 +1,89 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react';
 import {assets} from '../assets/assets'
-const ServiceDetail = () => {
-  return (
-    <div className='flex flex-col mt-20'>
-      <div id='detail-unit-1' className='flex sm:flex-col md:flex-row items-center justify-between bg-secondary-light'>
-        <div className='ml-10 w-full flex flex-col gap-4'>
-            <h1 className='text-2xl md:text-3xl lg:text-4xl font-medium'>นรีเวชทั่วไป</h1>
-            <p className=''>ดูแลสุขภาพสตรีในทุกช่วงวัย ตรวจภายใน<br/>ปรึกษาอาการผิดปกติ และโรคทางนรีเวชที่พบบ่อย</p>
-            <ul className='list-disc list-inside space-y-2'>
-                <li>ปวดประจำเดือน ประจำเดือนมาไม่ปกติ</li>
-                <li>ตกขาวผิดปกติ / กลิ่นไม่พึงประสงค์</li>
-                <li>วางแผนครอบครัว / คุมกำเนิด</li>
-                <li>ตรวจคัดกรองมะเร็งปากมดลูก (Pap smear, HPV DNA)</li>
-                <li>รักษาซีสต์ รังไข่ และเนื้องอกมดลูก</li>
-            </ul>
-        </div>
-        <img className='w-1/2' src={assets.reproductive_unit} alt="" />
-      </div>
-      <div id='detail-unit-2' className='flex sm:flex-col md:flex-row items-center justify-between bg-primary-darklight'>
-        <img className='w-1/2' src={assets.cancer_unit} alt="" />
-        <div className='ml-10 w-full flex flex-col gap-4'>
-            <h1 className='text-2xl md:text-3xl lg:text-4xl font-medium'>เวชศาสตร์การเจริญพันธุ์</h1>
-            <p className=''>พร้อมดูแลและให้คำปรึกษา<br/>ผู้มีบุตรยากด้วยเทคโนโลยีการเจริญพันธุ์สมัยใหม่</p>
-            <ul className='list-disc list-inside space-y-2'>
-                <li>ตรวจหาสาเหตุภาวะมีบุตรยาก</li>
-                <li>กระตุ้นไข่ ตรวจการตกไข่</li>
-                <li>วางแผนครอบครัว / คุมกำเนิด</li>
-                <li>ผสมเทียม (IUI) / เด็กหลอดแก้ว (IVF, ICSI)</li>
-                <li>ฝากไข่ เตรียมพร้อมก่อนแต่งงาน</li>
-                <li>วินิจฉัยโรคทางพันธุกรรมก่อนตั้งครรภ์</li>
-            </ul>
-        </div>
-      </div>
-      <div id='detail-unit-3' className='flex sm:flex-col md:flex-row items-center justify-between bg-primary-light'>
-        <div className='ml-10 w-full flex flex-col gap-4 '>
-            <h1 className='text-2xl md:text-3xl lg:text-4xl font-medium'>เวชศาสตร์มารดาและทารก</h1>
-            <p className=''>ดูดูแลครรภ์คุณแม่อย่างใกล้ชิดโดยเฉพาะ<br/>ผู้มีครรภ์เสี่ยงสูง และทารกในครรภ์ที่ต้องการดูแลพิเศษ</p>
-            <ul className='list-disc list-inside space-y-2'>
-                <li>ตรวจครรภ์ความเสี่ยงสูง เช่น เบาหวาน ความดัน</li>
-                <li>อัลตราซาวด์ดูพัฒนาการทารก</li>
-                <li>เจาะน้ำคร่ำ ตรวจพันธุกรรม</li>
-                <li>ติดตามครรภ์แฝด / ภาวะแทรกซ้อน</li>
-                <li>ให้คำปรึกษาก่อนคลอดโดยแพทย์เฉพาะทาง</li>
-            </ul>
-        </div>
-        <img className='w-1/2' src={assets.maternal_fetal_unit} alt="" />
-      </div>
-      <div id='detail-unit-4' className='flex sm:flex-col md:flex-row items-center justify-between bg-primary-darklight'>
-        <img className='w-1/2' src={assets.pelvic_surgery_unit} alt="" />
-        <div className='ml-10 w-full flex flex-col gap-4'>
-            <h1 className='text-2xl md:text-3xl lg:text-4xl font-medium'>มะเร็งนรีเวช </h1>
-            <p className=''>ตรวจคัดกรอง วินิจฉัย<br/>และรักษาโรคมะเร็งระบบสืบพันธุ์สตรีแบบครบวงจร</p>
-            <ul className='list-disc list-inside space-y-2'>
-                <li>มะเร็งปากมดลูก มะเร็งรังไข่ มดลูก ช่องคลอด</li>
-                <li>ตรวจเชื้อ HPV และ Pap Smear</li>
-                <li>ตรวจชิ้นเนื้อ วินิจฉัยความผิดปกติ</li>
-                <li>ผ่าตัด เคมีบำบัด รังสีรักษา</li>
-                <li>ติดตามผลและดูแลระยะฟื้นฟู</li>
-            </ul>
-        </div>
-      </div>
-    </div>
-  )
-}
+import axios from 'axios';
 
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
+
+
+const ServiceDetail = () => {
+  
+  const [services, setServices] = useState([]); 
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  // ✅ เปลี่ยนชื่อฟังก์ชันให้ชัดเจนและเรียกใช้ให้ถูกต้อง
+  const fetchPublicServices = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      // ✅ สำคัญ: Endpoint นี้จะต้องถูกตั้งค่าใน Backend ให้เข้าถึงได้โดยไม่ต้องใช้ Token
+      // ผมแนะนำให้สร้าง Endpoint ใหม่ เช่น /api/public/services เพื่อความชัดเจน
+      const response = await axios.get(`${API_BASE_URL}/api/public/services`); 
+      // ✅ ไม่ต้องส่ง Authorization header เพราะเป็น Public Endpoint
+      
+      setServices(response.data); // ✅ กำหนดข้อมูลที่ได้ (ซึ่งควรเป็น Array) ให้กับ state 'services'
+    } catch (err) {
+      console.error('Failed to fetch public services:', err);
+      // ข้อความ Error สำหรับผู้ใช้ทั่วไป (ไม่ควรแสดงรายละเอียดทางเทคนิคมากเกินไป)
+      setError('ไม่สามารถโหลดข้อมูลบริการได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPublicServices(); // ✅ เรียกใช้ฟังก์ชันที่ถูกต้อง
+  }, []); // Dependency array ว่างเปล่า เพื่อให้เรียกใช้แค่ครั้งเดียวเมื่อ Component ถูก Mount
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64 text-gray-600">
+        กำลังโหลดข้อมูลบริการ...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-64 text-red-600">
+        {error}
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-4xl font-bold text-center text-gray-800 mb-10">บริการของเรา</h1>
+      {services.length === 0 ? (
+        <p className="text-center text-gray-600 text-lg">ยังไม่มีบริการให้แสดงในขณะนี้</p>
+      ) : (
+        // ✅ วนลูปเพื่อแสดงบริการแต่ละรายการ
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {services.map((service) => (
+            <div
+              key={service.service_id} // ✅ ใช้ service_id เป็น key
+              className="bg-white rounded-lg shadow-lg overflow-hidden transform transition-transform duration-300 hover:scale-105"
+            >
+              <img
+                // ✅ ใช้ service.picture_path หรือใช้ placeholder หากไม่มี/ผิดพลาด
+                src={service.picture_path || 'https://placehold.co/600x400/E0F2F7/000?text=No+Image'} 
+                alt={service.service_name || 'Service Image'}
+                className="w-full h-48 object-cover"
+                // Fallback สำหรับรูปภาพที่โหลดไม่ได้
+                onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/600x400/E0F2F7/000?text=Image+Error'; }} 
+              />
+              <div className="p-6">
+                <h2 className="text-2xl font-semibold text-gray-800 mb-2">{service.service_name}</h2>
+                <p className="text-gray-600 text-base leading-relaxed">
+                  {service.description || 'ไม่มีคำอธิบายสำหรับบริการนี้'}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 export default ServiceDetail

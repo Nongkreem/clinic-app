@@ -33,6 +33,7 @@ const ManagePageTemplate = ({
       const response = await axios.get(`${API_BASE_URL}${fetchItemsApi}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
+      console.log('Fetched items data in ManagePageTemplate: ', response)
       setItems(response.data);
     } catch (err) {
       console.error(`Failed to fetch ${popupTitlePrefix} items:`, err);
@@ -58,6 +59,7 @@ const ManagePageTemplate = ({
   };
 
   const handleEditItem = (item) => {
+    console.log('Item from managePageTemplate: ',item)
     setEditingItem(item); // ตั้งค่าข้อมูลที่จะแก้ไข
     setIsPopupOpen(true); // เปิด Modal
     setError(''); // เคลียร์ error

@@ -10,10 +10,13 @@ router.post('/doctors', authenticateToken, authorizeRole(['nurse', 'head_nurse']
 // Route สำหรับดึงข้อมูลแพทย์ทั้งหมด
 router.get('/doctors', authenticateToken, authorizeRole(['nurse', 'head_nurse']), doctorController.getAllDoctors);
 
+
 // Route สำหรับอัปเดตข้อมูลแพทย์
 router.put('/doctors/:id', authenticateToken, authorizeRole(['nurse', 'head_nurse']), doctorController.updateDoctor);
 
 // Route สำหรับลบข้อมูลแพทย์
 router.delete('/doctors/:id', authenticateToken, authorizeRole(['nurse', 'head_nurse']), doctorController.deleteDoctor);
+
+router.get('/doctors/by-service/:serviceId', authenticateToken, authorizeRole(['nurse', 'head_nurse']), doctorController.getDoctorsByService);
 
 module.exports = router;

@@ -35,6 +35,7 @@ exports.createDoctor = async (req, res) => {
 exports.getAllDoctors = async (req, res) => {
   try {
     const doctors = await Doctor.getAllDoctors();
+    console.log('doctor data')
     res.status(200).json(doctors);
   } catch (error) {
     console.error('Error in getAllDoctors controller:', error);
@@ -84,5 +85,16 @@ exports.deleteDoctor = async (req, res) => {
   } catch (error) {
     console.error('Error in deleteDoctor controller:', error);
     res.status(500).json({ message: 'เกิดข้อผิดพลาดในการลบข้อมูลแพทย์' });
+  }
+};
+
+exports.getDoctorsByService = async (req, res) => {
+  const { serviceId } = req.params; // ดึง serviceId จาก URL parameter
+  try {
+    const doctors = await Doctor.getDoctorsByService(parseInt(serviceId, 10));
+    res.status(200).json(doctors);
+  } catch (error) {
+    console.error('Error in getDoctorsByService controller:', error);
+    res.status(500).json({ message: 'ไม่สามารถดึงข้อมูลแพทย์ตามบริการได้' });
   }
 };

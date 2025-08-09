@@ -23,9 +23,11 @@ import ServiceManage from './pages/nurse/ServiceManage.jsx';
 import DoctorsManage from './pages/nurse/DoctorsManage.jsx';
 import GuideManage from './pages/nurse/GuideManage.jsx';
 import ClinicRoomManage from './pages/nurse/ClinicRoomManage.jsx';
+import DoctorScheduleManage from './pages/nurse/DoctorScheduleManage.jsx';
 
 // Components
 import Button from './components/common/Button';
+import Appoinment from './pages/patient/AppoinmentBooking.jsx';
 
 
 // omponent สำหรับ Protected Route
@@ -86,6 +88,7 @@ function App() {
           {/* Patient Routes */}
           <Route path="patient">
             <Route path="home" element={<PatientDashboard />} />
+            <Route path="appointment" element={<Appoinment/>}/>
           </Route>
         </Route>
 
@@ -99,6 +102,7 @@ function App() {
             <Route path="doctors" element={<DoctorsManage/>}/>
             <Route path="guide" element={<GuideManage/>}/>
             <Route path="examination-room" element={<ClinicRoomManage/>}/>
+            <Route path="schedules" element={<DoctorScheduleManage/>}/>
             <Route path="*" element={<Navigate to="services" replace />} /> {/* Fallback สำหรับ /nurse-dashboard/unknown-path */}
           </Route>
           

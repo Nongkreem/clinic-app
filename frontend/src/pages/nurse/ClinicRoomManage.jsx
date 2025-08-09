@@ -28,7 +28,7 @@ const ClinicRoomManage = () => {
       <td className="py-3 px-4 whitespace-nowrap text-sm">
         <div className="flex space-x-2">
           <button
-            onClick={() => handleEdit(room)}
+            onClick={() => handleEdit(room.room_id)}
             className="px-3 py-1 text-xs bg-primary-default text-white rounded-lg hover:bg-primary-dark transition duration-200"
           >
             แก้ไข

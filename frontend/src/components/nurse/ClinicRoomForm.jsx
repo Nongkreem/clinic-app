@@ -219,7 +219,7 @@ const ClinicRoomForm = ({ initialData, onSaveSuccess, onCancel }) => {
           variant={initialData ? 'primary' : 'success'}
           disabled={loading}
         >
-          {loading ? 'กำลังบันทึก...' : (initialData ? 'บันทึกการแก้ไข' : 'เพิ่มแพทย์')}
+          {loading ? 'กำลังบันทึก...' : (initialData ? 'บันทึกการแก้ไข' : 'เพิ่มห้อง')}
         </Button>
       </div>
     </form>
