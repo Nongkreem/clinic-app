@@ -2,7 +2,7 @@ const db = require('../config/db'); // ตรวจสอบให้แน่�
 const passwordHasher = require('../utils/passwordHasher'); // ต้องมี passwordHasher
 
 
-exports.findByEmail = async (email) => {
+exports.findByUserEmail = async (email) => {
   try {
     const [rows] = await db.execute('SELECT id, email, password_hash, role, entity_id FROM user_accounts WHERE email = ?', [email]);
     return rows[0] || null;
@@ -12,25 +12,60 @@ exports.findByEmail = async (email) => {
   }
 };
 
-exports.create = async ({ email, password, role, entityId }) => {
-  try {
-    // Hash รหัสผ่านก่อนบันทึกลงฐานข้อมูล
-    const hashedPassword = await passwordHasher.hashPassword(password);
+exports.register = async (email, password, role, hn, firstName, lastName, dateOfBirth, phoneNumber) => {
+    const connection = await db.getConnection(); // Get a database connection
+    try {
+        await connection.beginTransaction(); // Start a transaction
 
-    const [result] = await db.execute(
-      'INSERT INTO user_accounts (email, password_hash, role, entity_id) VALUES (?, ?, ?, ?)',
-      [email, hashedPassword, role, entityId]
-    );
+        // 1. Check if user_name (email) already exists in User_account
+        const [existingUsers] = await connection.execute(
+            'SELECT email FROM user_accounts WHERE email = ?',
+            [email]
+        );
+        if (existingUsers.length > 0) {
+            await connection.rollback(); // Rollback the transaction if username exists
+            return { success: false, message: 'อีเมลนี้ถูกใช้ลงทะเบียนแล้ว' };
+        }
 
-    // ส่งคืนข้อมูลผู้ใช้ที่สร้างใหม่
-    return {
-      id: result.insertId,
-      email,
-      role,
-      entity_id: entityId
-    };
-  } catch (error) {
-    console.error('Error creating user:', error);
-    throw error;
-  }
+        // 2. Hash the password
+        const hashedPassword = await passwordHasher.hashPassword(password);
+        let entityId = null; 
+
+        if (role === 'patient') {
+            const [existingHNs] = await connection.execute(
+                'SELECT hn FROM patient WHERE hn = ?',
+                [hn]
+            );
+            if (existingHNs.length > 0) {
+                await connection.rollback(); // Rollback if HN exists
+                return { success: false, message: 'หมายเลข HN นี้ถูกใช้ลงทะเบียนแล้ว' };
+            }
+
+            // 4. Insert into Patient table
+            const [patientResult] = await connection.execute(
+                'INSERT INTO patient (hn, first_name, last_name, date_of_birth, phone_number) VALUES (?, ?, ?, ?, ?)',
+                [hn, firstName, lastName, dateOfBirth, phoneNumber]
+            );
+            entityId = patientResult.insertId; // Get the newly generated patient_id
+            console.log(`[User Model] New patient created with patient_id: ${entityId}`);
+        }
+        
+        const [userAccountResult] = await connection.execute(
+            'INSERT INTO user_accounts (email, password_hash, role, entity_id) VALUES (?, ?, ?, ?)',
+            [email, hashedPassword, role, entityId]
+        );
+        console.log(`[User Model] New user account created for email: ${email}`);
+
+
+        await connection.commit(); // Commit the transaction if all inserts are successful
+        return { success: true, message: 'ลงทะเบียนสำเร็จ' };
+
+    } catch (error) {
+        await connection.rollback(); // Rollback on any error during the transaction
+        console.error('Error during user registration transaction:', error);
+        // Throw the error so the controller can catch it and send appropriate response
+        throw error;
+    } finally {
+        connection.release(); // Always release the connection
+    }
 };

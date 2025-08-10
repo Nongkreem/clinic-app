@@ -3,8 +3,8 @@ const router = express.Router();
 const authController = require('../controllers/authController');
 
 // Route สำหรับ Login
-router.post('/login', authController.loginUser);
+router.post('/login', authController.login);
 
-router.post('/register', authController.registerUser);
+router.post('/register', authController.register);
 
 module.exports = router;
