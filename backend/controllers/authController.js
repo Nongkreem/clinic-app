@@ -67,7 +67,7 @@ exports.login = async (req, res) => {
     if (!isMatch) return res.status(401).json({ message: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' });
 
     // สร้าง JWT token
-    const token = jwt.sign({ id: user.id, role: user.role, email: user.user_name }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    const token = jwt.sign({ id: user.id, role: user.role, email: user.user_name, entity_id: user.entity_id }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
     res.json({
       message: 'เข้าสู่ระบบสำเร็จ',

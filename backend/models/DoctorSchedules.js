@@ -353,10 +353,10 @@ exports.getScheduleById = async (ds_id) => {
                 d.full_name AS doctor_full_name,
                 er.room_id,
                 er.room_name
-            FROM doctorSchedules ds -- ✅ ใช้ชื่อตารางตามที่คุณยืนยัน
+            FROM doctorSchedules ds
             JOIN services s ON ds.service_id = s.service_id
             JOIN doctors d ON ds.doctor_id = d.doctor_id
-            JOIN examRoom er ON ds.room_id = er.room_id -- ✅ ใช้ชื่อตารางตามที่คุณยืนยัน
+            JOIN examRoom er ON ds.room_id = er.room_id 
             WHERE ds.ds_id = ?`,
       [ds_id]
     );
@@ -365,7 +365,7 @@ exports.getScheduleById = async (ds_id) => {
     const schedule = rows[0];
     const [slots] = await db.execute(
       `SELECT ers_id, slot_start, slot_end, is_booked
-             FROM examRoomSlots -- ✅ ใช้ชื่อตารางตามที่คุณยืนยัน
+             FROM examRoomSlots
              WHERE ds_id = ?
              ORDER BY slot_start`,
       [ds_id]
@@ -382,16 +382,17 @@ exports.getAggregatedAvailableSlots = async (scheduleDate, serviceId) => {
   try {
     const [rows] = await db.execute(
       `SELECT
+                ers.ers_id,
                 ers.slot_start,
                 ers.slot_end,
                 COUNT(DISTINCT ds.ds_id) AS available_schedules_count,
                 GROUP_CONCAT(DISTINCT ds.ds_id ORDER BY ds.ds_id SEPARATOR ',') AS ds_ids_available
-            FROM examRoomSlots ers -- ✅ ใช้ชื่อตารางตามที่คุณยืนยัน
-            JOIN doctorSchedules ds ON ers.ds_id = ds.ds_id -- ✅ ใช้ชื่อตารางตามที่คุณยืนยัน
+            FROM examRoomSlots ers
+            JOIN doctorSchedules ds ON ers.ds_id = ds.ds_id
             WHERE ds.schedule_date = ?
               AND ds.service_id = ?
               AND ers.is_booked = FALSE
-            GROUP BY ers.slot_start, ers.slot_end
+            GROUP BY ers.ers_id,ers.slot_start, ers.slot_end
             ORDER BY ers.slot_start ASC`,
       [scheduleDate, serviceId]
     );

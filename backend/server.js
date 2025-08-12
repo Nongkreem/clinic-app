@@ -38,6 +38,7 @@ const serviceRoutes = require('./routes/serviceRoutes');
 const doctorRoutes = require('./routes/doctorRoutes');
 const clinicRoomRoutes = require('./routes/clinicRoomRoutes');
 const doctorScheduleRoutes = require('./routes/doctorScheduleRoutes');
+const appointmentRoutes = require('./routes/appointmentRoutes');
 
 app.use('/api/auth', authRoutes); // กำหนด prefix /api/auth สำหรับ Auth Routes
 app.use('/api/guide', guideRoutes);
@@ -45,6 +46,7 @@ app.use('/api', serviceRoutes);
 app.use('/api', doctorRoutes);
 app.use('/api', clinicRoomRoutes);
 app.use('/api', doctorScheduleRoutes);
+app.use('/api/appointments', appointmentRoutes);
 
 
 // --- ทดสอบ Protected Route (ต้อง Login ก่อน) ---

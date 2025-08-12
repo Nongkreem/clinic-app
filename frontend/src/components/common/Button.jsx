@@ -10,7 +10,7 @@ const Button = ({
     focus:outline-none focus:ring-2 focus:ring-opacity-50
     transition duration-200
     disabled:opacity-50 disabled:cursor-not-allowed
-    bg-primary-default hover:bg-primary-dark text-white focus:ring-green-500
+    bg-primary-default hover:bg-stromboli-800 text-white focus:ring-green-500
   `;
 
   return (
