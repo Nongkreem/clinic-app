@@ -73,17 +73,17 @@ function App() {
     );
   }
 
-  const hideNavbar = ['/login', '/register'].includes(location.pathname)
+  const hideNavbar = location.pathname === '/login' || location.pathname === '/register';
   return (
     <div className="">
 
       <Routes>
+          <Route path="login" element={<Login />} />
+          <Route path="register" element={<Register />} />
         {/* Layout มี navbar */}
         <Route element={<TopNavbarLayout />}>
           <Route index element={<Home />} /> {/* หน้า '/' */}
           <Route path="about" element={<About />} />
-          <Route path="login" element={<Login />} />
-          <Route path="register" element={<Register />} />
 
           {/* Patient Routes */}
           <Route path="patient">
