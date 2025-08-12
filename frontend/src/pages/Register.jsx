@@ -73,7 +73,7 @@ const Register = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
       <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
-        <h2 className="text-3xl font-bold text-center text-green-600 mb-8">ลงทะเบียนผู้ป่วย</h2>
+        <h2 className="text-3xl font-bold text-center text-primary-default mb-8">ลงทะเบียนผู้ป่วย</h2>
         <form onSubmit={handleSubmit}>
           {/* Error and Message Display Areas */}
           {error && (
@@ -188,7 +188,7 @@ const Register = () => {
           {/* Link to Login Page */}
           <p className="text-center text-sm mt-4 text-gray-600">
             มีบัญชีอยู่แล้ว?{' '}
-            <Link to="/login" className="text-blue-500 hover:underline font-semibold">
+            <Link to="/login" className="text-secondary-default hover:underline font-semibold">
               เข้าสู่ระบบที่นี่
             </Link>
           </p>

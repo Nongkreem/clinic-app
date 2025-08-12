@@ -12,6 +12,7 @@ services:
       MYSQL_PASSWORD: my_password
     volumes:
       - db_data:/var/lib/mysql
+      - ./mysql:/docker-entrypoint-initdb.d
     ports:
       - "3306:3306" # map พอร์ต 3306 ของ Host ไปยังพอร์ต 3306 ของ Container
   phpmyadmin:
