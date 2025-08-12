@@ -3,6 +3,7 @@ import FormGroup from "../common/FormGroup";
 import Button from "../common/Button";
 import axios from "axios";
 import { Plus, Trash2 } from "lucide-react";
+import ServiceDropdown from '../common/ServiceDropdown';
 
 const API_BASE_URL =
   import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";
@@ -21,12 +22,7 @@ const ClinicRoomForm = ({ initialData, onSaveSuccess, onCancel }) => {
         const response = await axios.get(`${API_BASE_URL}/api/services`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
-        setAllServiceOptions(
-          response.data.map((item) => ({
-            value: item.service_id.toString(),
-            label: item.service_name,
-          }))
-        );
+        setAllServiceOptions(response.data);
       } catch (err) {
         console.error("Failed to fetch service options:", err);
         setError("ไม่สามารถโหลดตัวเลือกบริการได้");
@@ -58,31 +54,28 @@ const ClinicRoomForm = ({ initialData, onSaveSuccess, onCancel }) => {
     setError("");
   }, [initialData]);
 
-  // ฟังก์ชันสำหรับเพิ่มช่องเลือกบริการใหม่
   const handleAddServiceField = () => {
     setSelectedServiceEntries(prevEntries => [
       ...prevEntries,
-      { tempId: crypto.randomUUID(), serviceId: '', serviceName: '' } // เพิ่มช่องว่างพร้อม tempId
+      // ค่าเริ่มต้นของ serviceId และ serviceName เป็นค่าว่าง
+      { tempId: crypto.randomUUID(), serviceId: '', serviceName: '' } 
     ]);
   };
 
-  // ฟังก์ชันสำหรับลบช่องเลือกบริการ
   const handleRemoveServiceField = (tempIdToRemove) => {
     setSelectedServiceEntries(prevEntries =>
       prevEntries.filter(entry => entry.tempId !== tempIdToRemove)
     );
   };
-
   // ฟังก์ชันสำหรับจัดการการเปลี่ยนแปลงค่าในแต่ละ Dropdown
-  const handleServiceChange = (tempIdToUpdate, newServiceId) => {
+  const handleServiceChange = (tempIdToUpdate, selectedService) => { // รับ selectedService เป็น Object
     setSelectedServiceEntries(prevEntries =>
       prevEntries.map(entry => {
         if (entry.tempId === tempIdToUpdate) {
-          const selectedOption = allServiceOptions.find(opt => opt.value === newServiceId);
           return {
             ...entry,
-            serviceId: newServiceId,
-            serviceName: selectedOption ? selectedOption.label : ''
+            serviceId: selectedService ? selectedService.service_id.toString() : '', // เก็บ ID เป็น String
+            serviceName: selectedService ? selectedService.service_name : ''
           };
         }
         return entry;
@@ -92,12 +85,14 @@ const ClinicRoomForm = ({ initialData, onSaveSuccess, onCancel }) => {
 
   // ฟังก์ชันสำหรับกรองตัวเลือกที่ยังไม่ถูกเลือก
   const getAvailableServiceOptions = (currentServiceId) => {
-    const currentlySelectedIds = selectedServiceEntries
-      .map(entry => entry.serviceId)
-      .filter(id => id && id !== currentServiceId); // กรองเฉพาะที่ถูกเลือกแล้วและไม่ใช่ตัวปัจจุบัน
+    // ID ของบริการที่ถูกเลือกใน Dropdown อื่นๆ (ที่ไม่ใช่ Dropdown ปัจจุบัน)
+    const currentlySelectedIdsInOtherDropdowns = selectedServiceEntries
+      .filter(entry => entry.serviceId && entry.serviceId !== currentServiceId)
+      .map(entry => entry.serviceId);
 
-    return allServiceOptions.filter(option =>
-      !currentlySelectedIds.includes(option.value)
+    // กรอง allServiceOptions ที่มีอยู่ทั้งหมด
+    return allServiceOptions.filter(serviceOption =>
+      !currentlySelectedIdsInOtherDropdowns.includes(serviceOption.service_id.toString())
     );
   };
 
@@ -170,14 +165,10 @@ const ClinicRoomForm = ({ initialData, onSaveSuccess, onCancel }) => {
         </label>
         {selectedServiceEntries.map((entry, index) => (
           <div key={entry.tempId} className="flex items-center gap-2 mb-2">
-            <FormGroup
-              as="select"
-              id={`service-${entry.tempId}`}
-              name={`service-${entry.tempId}`}
+            <ServiceDropdown
               value={entry.serviceId}
-              onChange={(e) => handleServiceChange(entry.tempId, e.target.value)}
-              options={getAvailableServiceOptions(entry.serviceId)} // กรองตัวเลือก
-              required
+              onChange={(selectedService) => handleServiceChange(entry.tempId, selectedService)}
+              options={getAvailableServiceOptions(entry.serviceId)} 
               className="flex-grow mb-0"
             />
             <Button

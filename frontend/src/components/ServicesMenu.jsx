@@ -1,5 +1,5 @@
 import React from 'react'
-import { assets } from '../assets/assets'
+import { assets } from '../../public/assets/assets'
 const ServicesMenu = () => {
     const scrollToSection = (id)=>{
         const section = document.getElementById(id);

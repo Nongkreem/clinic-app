@@ -2,7 +2,6 @@ import React from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import Button from './common/Button';
 import { useAuth } from '../context/AuthContext';
-import profileImg from '../assets/profile.jpg'
 const Navbar = () => {
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
@@ -39,7 +38,9 @@ const Navbar = () => {
         </Button>
       ) : (
         <div className='flex items-center gap-4 cursor-pointer group relative'>
-          <img src={profileImg} alt="" className='w-10 h-10 rounded-full'/>
+          <div className='flex items-center justify-center w-10 h-10 rounded-full bg-primary-default'>
+            <p className='text-white'>p</p>
+          </div>
           <div className='absolute top-0 right-0 pt-14 text-base font-medium text-gray-600 z-20 hidden group-hover:block'>
             <div className='min-w-48 bg-stone-100 rounded flex flex-col gap-4 p-4'>
                 <p onClick={()=>navigate('/')} className='hover:text-black cursor-pointer'>โปรไฟล์</p>

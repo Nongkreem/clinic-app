@@ -34,7 +34,7 @@ exports.createService = async ({ service_name, description, price, advice_ids })
 exports.getAllServices = async () => {
     try {
         const [services] = await db.execute (
-            'SELECT s.service_id, s.service_name, s.description, s.price FROM services s ORDER BY s.service_id DESC'
+            'SELECT s.service_id, s.service_name, s.description, s.price, s.img_path FROM services s ORDER BY s.service_id DESC'
         );
 
         // ดึงแต่ละบริการและคำแนะนำของแต่ละบริการ
