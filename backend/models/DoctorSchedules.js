@@ -382,25 +382,24 @@ exports.getAggregatedAvailableSlots = async (scheduleDate, serviceId) => {
   try {
     const [rows] = await db.execute(
       `SELECT
-                ers.ers_id,
                 ers.slot_start,
                 ers.slot_end,
-                COUNT(DISTINCT ds.ds_id) AS available_schedules_count,
-                GROUP_CONCAT(DISTINCT ds.ds_id ORDER BY ds.ds_id SEPARATOR ',') AS ds_ids_available
+                COUNT(ers.ers_id) AS total_available_slots_in_time_block,
+                GROUP_CONCAT(ers.ers_id ORDER BY ers.ers_id SEPARATOR ',') AS ers_ids_in_block
             FROM examRoomSlots ers
             JOIN doctorSchedules ds ON ers.ds_id = ds.ds_id
-            WHERE ds.schedule_date = ?
+            WHERE DATE(ds.schedule_date) = ?
               AND ds.service_id = ?
               AND ers.is_booked = FALSE
-            GROUP BY ers.ers_id,ers.slot_start, ers.slot_end
+            GROUP BY ers.slot_start, ers.slot_end
             ORDER BY ers.slot_start ASC`,
       [scheduleDate, serviceId]
     );
 
     return rows.map((row) => ({
       ...row,
-      ds_ids_available: row.ds_ids_available
-        ? row.ds_ids_available.split(",").map(Number)
+      ers_ids_in_block: row.ers_ids_in_block
+        ? row.ers_ids_in_block.split(",").map(Number)
         : [],
     }));
   } catch (error) {
@@ -408,6 +407,7 @@ exports.getAggregatedAvailableSlots = async (scheduleDate, serviceId) => {
     throw error;
   }
 };
+
 
 exports.bookSlot = async (ers_id, patient_id, ds_id) => {
   const connection = await db.getConnection();

@@ -113,9 +113,6 @@ exports.getAppointmentById = async (appointmentId) => {
     }
 };
 
-
-
-
 exports.getPatientAppointments = async (patientId) => {
     try {
         const [rows] = await db.execute(
@@ -147,6 +144,55 @@ exports.getPatientAppointments = async (patientId) => {
     }
 };
 
+exports.getFilteredAppointments = async (filters = {}) => {
+    const {serviceId, status} = filters;
+    let query = `
+        SELECT
+            a.appointment_id,
+            a.appointment_date,
+            a.appointment_time,
+            a.status,
+            a.symptoms,
+            a.appointmentType,
+            p.hn,
+            p.first_name AS patient_first_name,
+            p.last_name AS patient_last_name,
+            s.service_name,
+            d.full_name AS doctor_full_name,
+            er.room_name
+        FROM appointment a
+        JOIN patient p ON a.patient_id = p.patient_id
+        JOIN doctorSchedules ds ON a.ds_id = ds.ds_id
+        JOIN services s ON ds.service_id = s.service_id
+        JOIN doctors d ON ds.doctor_id = d.doctor_id
+        JOIN examRoom er ON ds.room_id = er.room_id
+    `;
+    const conditions = [];
+    const params = [];
+
+    if (serviceId) {
+        conditions.push(`s.service_id = ?`);
+        params.push(serviceId);
+    }
+    if (status) {
+        conditions.push(`a.status = ?`);
+        params.push(status);
+    }
+
+    if (conditions.length > 0) {
+        query += ` WHERE ` + conditions.join(' AND ');
+    }
+
+    query += ` ORDER BY a.appointment_date DESC, a.appointment_time DESC`;
+
+    try {
+        const [rows] = await db.execute(query, params);
+        return rows;
+    } catch (error) {
+        console.error('Error fetching filtered appointments:', error);
+        throw error;
+    }
+};
 
 exports.updateAppointmentStatus = async (appointmentId, newStatus, confirmCheckInTime = null) => {
     try {

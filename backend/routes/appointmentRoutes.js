@@ -16,6 +16,7 @@ router.get('/:id', authenticateToken, authorizeRole(['patient', 'nurse', 'head_n
 
 // Route to get all appointments for the authenticated patient
 router.get('/my-appointments', authenticateToken, authorizeRole(['patient']), appointmentController.getPatientAppointments);
+router.get('/', authenticateToken, authorizeRole(['nurse', 'head_nurse']), appointmentController.getAppointments);
 
 
 // Routes for updating/cancelling appointments (typically nurse/head_nurse roles)

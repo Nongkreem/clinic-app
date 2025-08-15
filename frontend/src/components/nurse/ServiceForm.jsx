@@ -123,7 +123,7 @@ const ServiceForm = ({ initialData, onSaveSuccess, onCancel }) => {
       .filter(id => !isNaN(id)); // กรองเฉพาะ ID ที่ถูกต้อง
 
     // Validation
-    if (!serviceName.trim() || !description.trim() || !price || adviceIdsToSend.length === 0) {
+    if (!serviceName.trim() || !description.trim() || !price) {
       setError('กรุณากรอกข้อมูลให้ครบถ้วนและเลือกคำแนะนำอย่างน้อยหนึ่งรายการ');
       setLoading(false);
       return;
@@ -211,7 +211,6 @@ const ServiceForm = ({ initialData, onSaveSuccess, onCancel }) => {
               value={entry.adviceId}
               onChange={(e) => handleAdviceChange(entry.tempId, e.target.value)}
               options={getAvailableOptions(entry.adviceId)} // กรองตัวเลือก
-              required
               className="flex-grow mb-0" // mb-0 เพื่อไม่ให้มี margin-bottom ซ้ำซ้อน
             />
             <Button

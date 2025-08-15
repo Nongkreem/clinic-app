@@ -15,6 +15,7 @@ exports.getAvailableSlotsByDateAndService = async (req, res) => {
 
     try {
         const slots = await DoctorSchedule.getAggregatedAvailableSlots(scheduleDate, parsedServiceId);
+        console.log('Available slots for booking:', slots);
         res.status(200).json(slots);
     } catch (error) {
         console.error('Error fetching available slots for booking:', error);
@@ -25,7 +26,6 @@ exports.getAvailableSlotsByDateAndService = async (req, res) => {
 exports.bookNewAppointment = async (req, res) => {
     const { ers_id, symptoms, appointment_type } = req.body;
     console.log('Booking new appointment with data:', req.body);
-    // Patient ID comes from the authenticated user's token (decoded in auth middleware)
     const patient_id = req.user.entity_id; // Assuming entity_id stores patient_id for patient role
 
     if (!ers_id || !patient_id || !symptoms || !appointment_type) {
@@ -76,6 +76,34 @@ exports.getPatientAppointments = async (req, res) => {
         res.status(500).json({ message: 'ไม่สามารถดึงข้อมูลนัดหมายของผู้ป่วยได้' });
     }
 };
+
+// ฟังก์ชันดึงรายการนัดหมายตามบริการ
+exports.getAppointments = async (req, res) => {
+    const { serviceId, status } = req.query;
+    
+    const filters = {};
+    if (serviceId) {
+        const parsedServiceId = parseInt(serviceId, 10);
+        if (!isNaN(parsedServiceId)) {
+            filters.serviceId = parsedServiceId;
+        } else {
+            return res.status(400).json({ message: 'รหัสบริการไม่ถูกต้อง' });
+        }
+    }
+    if (status) {
+        filters.status = status;
+    }
+
+    try {
+        // Assume this endpoint is for staff (nurse, head_nurse) so no patient_id filter by default
+        const appointments = await Appointment.getFilteredAppointments(filters);
+        res.status(200).json(appointments);
+    } catch (error) {
+        console.error('Error fetching appointments with filters:', error);
+        res.status(500).json({ message: 'ไม่สามารถดึงข้อมูลนัดหมายได้' });
+    }
+
+}
 
 exports.updateAppointmentStatus = async (req, res) => {
     const { id } = req.params;
