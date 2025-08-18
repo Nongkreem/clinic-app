@@ -63,7 +63,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   
-  const register = async (email, password, role, hn, firstName, lastName, dateOfBirth, phoneNumber) => {
+  const register = async (email, password, role, hn, firstName, lastName, dateOfBirth, phoneNumber, gender) => {
     setLoading(true);
     try {
       const response = await axios.post(`${API_BASE_URL}/api/auth/register`, {
@@ -74,7 +74,8 @@ export const AuthProvider = ({ children }) => {
         firstName,    
         lastName,     
         dateOfBirth,  
-        phoneNumber   
+        phoneNumber,
+        gender
       });
       setLoading(false);
       return response.data; // { success: true, message: '...' } or { success: false, message: '...' }

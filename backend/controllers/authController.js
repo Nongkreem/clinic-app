@@ -12,10 +12,10 @@ const isHospitalEmail = (email) => {
 // เปลี่ยนชื่อจาก registerUser เป็น register ให้สอดคล้องกับ AuthContext
 exports.register = async (req, res) => {
     // Destructure all required fields from the request body
-    const { email, password, role, hn, firstName, lastName, dateOfBirth, phoneNumber } = req.body;
+    const { email, password, role, hn, firstName, lastName, dateOfBirth, phoneNumber, gender } = req.body;
 
     // Basic validation for all fields
-    if (!email || !password || !role || !hn || !firstName || !lastName || !dateOfBirth || !phoneNumber) {
+    if (!email || !password || !role || !hn || !firstName || !lastName || !dateOfBirth || !phoneNumber || !gender) {
         return res.status(400).json({ success: false, message: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
     }
 
@@ -32,7 +32,7 @@ exports.register = async (req, res) => {
     try {
         // Call the User model's register function with all collected data
         // ส่ง email เป็น username
-        const result = await User.register(email, password, role, hn, firstName, lastName, dateOfBirth, phoneNumber);
+        const result = await User.register(email, password, role, hn, firstName, lastName, dateOfBirth, phoneNumber, gender);
         
         if (result.success) {
             res.status(201).json(result); // 201 Created

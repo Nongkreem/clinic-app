@@ -52,79 +52,81 @@ const Login = () => {
     } else {
       setError(result.message);
     }
-
+    
   };
+    
+   return (
+    <div className="min-h-screen flex ">
+      {/* ส่วนซ้าย: พื้นหลังรูปภาพ */}
+      {/* แก้ไขจาก bg-primary-default เป็นการใช้ backgroundImage */}
+      <div 
+        className="hidden lg:flex w-1/2 items-center justify-center bg-cover bg-center relative"
+        style={{ 
+          backgroundImage: "url('/assets/pelvic-surgery-unit.jpg')"
+        }}
+      >
+        {/* เพิ่ม overlay เพื่อทำให้ภาพจางลง */}
+        <div className="absolute inset-0 bg-gray-900 opacity-40"></div>
+        {/* ปรับขนาดตัวอักษรของข้อความ "ยินดีต้อนรับ" จาก text-4xl เป็น text-6xl */}
+        <div className="relative text-white text-5xl font-bold drop-shadow-lg z-10">ยินดีต้อนรับ</div>
+      </div>
 
-   return (
-    <div className="min-h-screen flex ">
-      {/* Left side: green background and image */}
-      <div className="hidden lg:flex w-1/2 bg-primary-default items-center justify-center relative overflow-hidden">
-        {/* Replace with your image */}
-        <img 
-          src="https://source.unsplash.com/1600x900/?hospital,medical" 
-          alt="Medical background"
-          className="w-full h-full object-cover absolute inset-0"
-        />
-        <div className="absolute inset-0 bg-primary-default opacity-80"></div>
-        <div className="relative text-white text-4xl font-bold z-10">ยินดีต้อนรับ</div>
-      </div>
+      {/* ส่วนขวา: ฟอร์ม Login */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-4">
+        {/* ปรับขนาด container ของ form เป็นค่าที่กว้างขึ้น เช่น w-96 และ max-w-lg */}
+        <div className="w-96 max-w-lg">
+          <h2 className="text-3xl font-bold text-center text-primary-default mb-8">เข้าสู่ระบบ</h2>
+          <form onSubmit={handleSubmit}>
+            {error && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-6" role="alert">
+                <span className="block sm:inline">{error}</span>
+              </div>
+            )}
+            {message && (
+              <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg relative mb-6" role="alert">
+                <span className="block sm:inline">{message}</span>
+              </div>
+            )}
 
-      {/* Right side: Login form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-4">
-        {/* Adjusted to remove the outer box and its padding/shadow */}
-        <div className="w-96 max-w-lg">
-          <h2 className="text-3xl font-bold text-center text-primary-default mb-8">เข้าสู่ระบบ</h2>
-          <form onSubmit={handleSubmit}>
-            {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md relative mb-6" role="alert">
-                <span className="block sm:inline">{error}</span>
-              </div>
-            )}
-            {message && (
-              <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-md relative mb-6" role="alert">
-                <span className="block sm:inline">{message}</span>
-              </div>
-            )}
+            <FormGroup
+              label="อีเมล"
+              type="email"
+              id="email"
+              name="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="ใส่อีเมลของคุณ"
+              required
+              inputClassName="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-default h-12"
+            />
 
-            <FormGroup
-              label="อีเมล"
-              type="email"
-              id="email"
-              name="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="ใส่อีเมลของคุณ"
-              required
-              inputClassName="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-default h-12"
-            />
+            <FormGroup
+              label="รหัสผ่าน"
+              type="password"
+              id="password"
+              name="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="ใส่รหัสผ่านของคุณ"
+              required
+              inputClassName="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-default h-12"
+            />
 
-            <FormGroup
-              label="รหัสผ่าน"
-              type="password"
-              id="password"
-              name="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="ใส่รหัสผ่านของคุณ"
-              required
-              inputClassName="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-default h-12"
-            />
+            <Button type="submit" variant="primary" className="w-full mt-6" disabled={loading}>
+              {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
+            </Button>
 
-            <Button type="submit" variant="primary" className="w-full mt-6" disabled={loading}>
-              {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
-            </Button>
-
-            <p className="text-center text-sm mt-4 text-gray-600">
-              ยังไม่มีบัญชีใช่ไหม?{' '}
-              <Link to="/register" className="text-secondary-default hover:underline font-semibold">
-                ลงทะเบียนที่นี่
-              </Link>
-            </p>
-          </form>
-        </div>
-      </div>
-    </div>
-  );
+            <p className="text-center text-sm mt-4 text-gray-600">
+              ยังไม่มีบัญชีใช่ไหม?{' '}
+              <Link to="/register" className="text-secondary-default hover:underline font-semibold">
+                ลงทะเบียนที่นี่
+              </Link>
+            </p>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default Login;

@@ -12,7 +12,7 @@ exports.findByUserEmail = async (email) => {
   }
 };
 
-exports.register = async (email, password, role, hn, firstName, lastName, dateOfBirth, phoneNumber) => {
+exports.register = async (email, password, role, hn, firstName, lastName, dateOfBirth, phoneNumber, gender) => {
     const connection = await db.getConnection(); // Get a database connection
     try {
         await connection.beginTransaction(); // Start a transaction
@@ -43,8 +43,8 @@ exports.register = async (email, password, role, hn, firstName, lastName, dateOf
 
             // 4. Insert into Patient table
             const [patientResult] = await connection.execute(
-                'INSERT INTO patient (hn, first_name, last_name, date_of_birth, phone_number) VALUES (?, ?, ?, ?, ?)',
-                [hn, firstName, lastName, dateOfBirth, phoneNumber]
+                'INSERT INTO patient (hn, first_name, last_name, date_of_birth, phone_number, gender) VALUES (?, ?, ?, ?, ?, ?)',
+                [hn, firstName, lastName, dateOfBirth, phoneNumber, gender]
             );
             entityId = patientResult.insertId; // Get the newly generated patient_id
             console.log(`[User Model] New patient created with patient_id: ${entityId}`);
