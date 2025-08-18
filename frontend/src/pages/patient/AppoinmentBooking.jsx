@@ -137,7 +137,7 @@ const AppoinmentBooking = () => {
             setSelectedSlot(null);
         } else {
             setSelectedTimeBlock(block);
-            setSelectedSlot(block.ers_ids_in_block[1]); 
+            setSelectedSlot(block.ers_ids_in_block[0]); 
         }
     }
 

@@ -20,8 +20,9 @@ const AppointmentReqManage = () => {
   const [showConfirmPopup, setShowConfirmPopup] = useState(false);
   const [actionType, setActionType] = useState(''); 
   const [selectedAppointmentId, setSelectedAppointmentId] = useState(null);
+  const [rejectionReason, setRejectionReason] = useState("");
 
-  // ✅ State สำหรับควบคุมการขยายรายละเอียดแถว
+  // State สำหรับควบคุมการขยายรายละเอียดแถว
   const [expandedAppointmentId, setExpandedAppointmentId] = useState(null);
 
   useEffect(() => {
@@ -84,13 +85,22 @@ const AppointmentReqManage = () => {
   const handleApproveClick = (appointmentId) => {
     setSelectedAppointmentId(appointmentId);
     setActionType('approve');
+    setRejectionReason(''); // เคลียร์เหตุผลการปฏิเสธ
     setShowConfirmPopup(true);
   };
 
   const handleRejectClick = (appointmentId) => {
     setSelectedAppointmentId(appointmentId);
     setActionType('reject');
+    setRejectionReason('');
     setShowConfirmPopup(true);
+  };
+
+  const handleRejectionReasonChange = (e) => {
+    const value = e.target.value;
+    console.log('Textarea onChange - Input Value:', value); // Log input as it's typed
+    setRejectionReason(value);
+    console.log('Textarea onChange - Rejection Reason State (after set):', value); // Log state value after update
   };
 
   const handleConfirmAction = async () => {
@@ -98,11 +108,35 @@ const AppointmentReqManage = () => {
     setLoading(true);
     setError('');
 
+    console.log('--- handleConfirmAction triggered ---');
+    console.log('Current actionType:', actionType);
+    console.log('Current rejectionReason state:', rejectionReason);
+    console.log('Trimmed rejectionReason:', rejectionReason.trim());
+    console.log('Is rejectionReason empty (after trim)?', !rejectionReason.trim());
+
+
+    if (actionType === 'reject' && !rejectionReason.trim()) {
+      console.log('Validation failed: Rejection reason is empty.');
+      setError('กรุณาระบุเหตุผลในการปฏิเสธ');
+      setLoading(false);
+      return;
+    }
+
     try {
         const newStatus = actionType === 'approve' ? 'approved' : 'rejected';
-        const response = await axios.put(`${API_BASE_URL}/api/appointments/${selectedAppointmentId}/status`, { newStatus }, {
+        let payload = { newStatus };
+        if (actionType === 'reject') {
+          payload.rejectionReason = rejectionReason.trim(); // ส่งเหตุผลการปฏิเสธ
+        }
+
+        console.log('Payload for API:', payload);
+
+
+        const response = await axios.put(`${API_BASE_URL}/api/appointments/${selectedAppointmentId}/status`, payload, {
             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
+
+        console.log('Backend response status:', response.status);
 
         if (response.status === 200) {
             // Refetch appointments after update to ensure data consistency
@@ -119,6 +153,8 @@ const AppointmentReqManage = () => {
         setLoading(false);
         setSelectedAppointmentId(null);
         setActionType('');
+        setRejectionReason('');
+        setShowConfirmPopup(false); 
     }
   };
 
@@ -126,6 +162,7 @@ const AppointmentReqManage = () => {
     setShowConfirmPopup(false);
     setSelectedAppointmentId(null);
     setActionType('');
+    setRejectionReason('');
   };
 
   const getFormattedDate = (dateString) => {
@@ -289,6 +326,11 @@ const AppointmentReqManage = () => {
                             <div>
                               <span className="font-semibold">ห้องตรวจ:</span> {appointment.room_name}
                             </div>
+                            {appointment.status === 'rejected' && appointment.rejection_reason && (
+                              <div className="col-span-full mt-2 p-2 bg-red-100 rounded-md">
+                                <span className="font-semibold text-red-700">เหตุผลการปฏิเสธ:</span> {appointment.rejection_reason}
+                              </div>
+                            )}
                           </div>
                           <div className="flex justify-end gap-2 mt-4">
                               {appointment.status === 'pending' && (
@@ -331,12 +373,28 @@ const AppointmentReqManage = () => {
             <p className="mb-4 text-gray-700">
                 คุณแน่ใจหรือไม่ที่จะ {actionType === 'approve' ? 'อนุมัติ' : 'ปฏิเสธ'} นัดหมายนี้?
             </p>
+            {actionType === 'reject' && (
+                <div className="mb-4">
+                    <label htmlFor="rejectionReason" className="block text-gray-700 text-sm font-semibold mb-2">
+                        เหตุผลการปฏิเสธ (บังคับ):
+                    </label>
+                    <textarea
+                        id="rejectionReason"
+                        className="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent transition duration-200"
+                        rows="3"
+                        value={rejectionReason}
+                        onChange={handleRejectionReasonChange}
+                        placeholder="กรุณาระบุเหตุผลในการปฏิเสธนัดหมายนี้..."
+                        required={actionType === 'reject'}
+                    ></textarea>
+                </div>
+            )}
             <div className="flex justify-end gap-3 mt-6">
                 <Button variant="secondary" onClick={handleCancelAction}>ยกเลิก</Button>
                 <Button 
                     variant={actionType === 'approve' ? 'success' : 'danger'} 
                     onClick={handleConfirmAction}
-                    disabled={loading}
+                    disabled={loading || (actionType === 'reject' && !rejectionReason.trim())}
                 >
                     {loading ? 'กำลังดำเนินการ...' : (actionType === 'approve' ? 'อนุมัติ' : 'ปฏิเสธ')}
                 </Button>
