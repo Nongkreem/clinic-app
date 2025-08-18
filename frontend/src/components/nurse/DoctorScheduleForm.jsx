@@ -106,7 +106,7 @@ const DoctorScheduleForm = ({ initialData, onSaveSuccess, onCancel }) => {
       // Fetch doctors and rooms for the initial data
       Promise.all([
         axios.get(`${API_BASE_URL}/api/doctors/by-service/${initialData.service_id}`, { headers }),
-        // ✅ Corrected URL for initial data load (using params)
+
         axios.get(`${API_BASE_URL}/api/rooms/available`, { 
             headers, 
             params: {

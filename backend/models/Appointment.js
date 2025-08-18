@@ -1,5 +1,6 @@
 // backend/models/Appointment.js
 const db = require('../config/db');
+const Patient = require('./Patient');
 
 exports.createAppointment = async (ers_id, patient_id, symptoms, appointment_type) => {
     const connection = await db.getConnection();
@@ -95,7 +96,8 @@ exports.getAppointmentById = async (appointmentId) => {
                 d.full_name AS doctor_full_name,
                 er.room_name,
                 ers.slot_start,
-                ers.slot_end
+                ers.slot_end,
+                a.rejection_reason
              FROM appointment a
              JOIN patient p ON a.patient_id = p.patient_id
              JOIN doctorSchedules ds ON a.ds_id = ds.ds_id
@@ -113,9 +115,6 @@ exports.getAppointmentById = async (appointmentId) => {
     }
 };
 
-
-
-
 exports.getPatientAppointments = async (patientId) => {
     try {
         const [rows] = await db.execute(
@@ -129,7 +128,11 @@ exports.getPatientAppointments = async (patientId) => {
                 a.appointmentType,
                 s.service_name,
                 d.full_name AS doctor_full_name,
-                er.room_name
+                er.room_name,
+                a.rejection_reason,
+                p.hn AS patient_hn,
+                p.first_name AS patient_first_name,
+                p.last_name AS patient_last_name
              FROM appointment a
              JOIN patient p ON a.patient_id = p.patient_id
              JOIN doctorSchedules ds ON a.ds_id = ds.ds_id
@@ -147,8 +150,58 @@ exports.getPatientAppointments = async (patientId) => {
     }
 };
 
+exports.getFilteredAppointments = async (filters = {}) => {
+    const {serviceId, status} = filters;
+    let query = `
+        SELECT
+            a.appointment_id,
+            a.appointment_date,
+            a.appointment_time,
+            a.status,
+            a.symptoms,
+            a.appointmentType,
+            p.hn,
+            p.first_name AS patient_first_name,
+            p.last_name AS patient_last_name,
+            s.service_name,
+            d.full_name AS doctor_full_name,
+            er.room_name,
+            a.rejection_reason
+        FROM appointment a
+        JOIN patient p ON a.patient_id = p.patient_id
+        JOIN doctorSchedules ds ON a.ds_id = ds.ds_id
+        JOIN services s ON ds.service_id = s.service_id
+        JOIN doctors d ON ds.doctor_id = d.doctor_id
+        JOIN examRoom er ON ds.room_id = er.room_id
+    `;
+    const conditions = [];
+    const params = [];
 
-exports.updateAppointmentStatus = async (appointmentId, newStatus, confirmCheckInTime = null) => {
+    if (serviceId) {
+        conditions.push(`s.service_id = ?`);
+        params.push(serviceId);
+    }
+    if (status) {
+        conditions.push(`a.status = ?`);
+        params.push(status);
+    }
+
+    if (conditions.length > 0) {
+        query += ` WHERE ` + conditions.join(' AND ');
+    }
+
+    query += ` ORDER BY a.appointment_date DESC, a.appointment_time DESC`;
+
+    try {
+        const [rows] = await db.execute(query, params);
+        return rows;
+    } catch (error) {
+        console.error('Error fetching filtered appointments:', error);
+        throw error;
+    }
+};
+
+exports.updateAppointmentStatus = async (appointmentId, newStatus, confirmCheckInTime = null, rejectionReason = null) => {
     try {
         let query = `UPDATE appointment SET status = ?`;
         const params = [newStatus];
@@ -157,6 +210,15 @@ exports.updateAppointmentStatus = async (appointmentId, newStatus, confirmCheckI
             query += `, confirmCheckInTime = ?`;
             params.push(confirmCheckInTime);
         }
+        // หากสถานะเปป็น 'rejected' ให้บันทึกเหตุผล
+        if (newStatus === 'rejected') {
+            query += `, rejection_reason = ?`;
+            params.push(rejectionReason);
+        } else {
+            // หากเปลี่ยนสถานะอื่นที่ไม่ใช่ 'rejected', ให้ clear เหตุผลการปฏิเสธ (ถ้ามี)
+            query += `, rejection_reason = NULL`;
+        }
+
         query += ` WHERE appointment_id = ?`;
         params.push(appointmentId);
 
@@ -169,30 +231,50 @@ exports.updateAppointmentStatus = async (appointmentId, newStatus, confirmCheckI
 };
 
 
-exports.cancelAppointment = async (appointmentId) => {
+exports.cancelAppointment = async (appointmentId, patientId) => { 
     const connection = await db.getConnection();
     try {
         await connection.beginTransaction();
 
-        // 1. Get ers_id from the appointment
-        const [appointment] = await connection.execute('SELECT ers_id FROM appointment WHERE appointment_id = ?', [appointmentId]);
-        if (appointment.length === 0) {
+        const [appointmentRows] = await connection.execute(
+            `SELECT ers_id, status, appointment_date, appointment_time, patient_id
+             FROM appointment WHERE appointment_id = ? AND patient_id = ?`,
+            [appointmentId, patientId]
+        );
+        if (appointmentRows.length === 0) {
             await connection.rollback();
+            console.warn(`[Appointment Model] Attempt to cancel non-existent or unauthorized appointment: ${appointmentId} for patient ${patientId}`);
             return false;
         }
-        const ers_id = appointment[0].ers_id;
+        const { ers_id, status: currentStatus, appointment_date, appointment_time, patient_id: affectedPatientId } = appointmentRows[0];
 
-        // 2. Update appointment status to 'cancelled'
+        let incrementBlacklist = false;
+        if (currentStatus === 'approved') { // Only approved appointments count towards blacklist
+            const appointmentDateTime = new Date(`${appointment_date.toISOString().slice(0, 10)}T${appointment_time.slice(0, 8)}`);
+            const twentyFourHoursBeforeAppointment = new Date(appointmentDateTime.getTime() - (24 * 60 * 60 * 1000));
+            const currentTime = new Date();
+
+            if (currentTime > twentyFourHoursBeforeAppointment) {
+                incrementBlacklist = true;
+            }
+        }
+
         const [updateAppointmentResult] = await connection.execute(
             `UPDATE appointment SET status = 'cancelled' WHERE appointment_id = ?`,
             [appointmentId]
         );
 
-        // 3. Make the exam room slot available again
         const [updateSlotResult] = await connection.execute(
             `UPDATE examRoomSlots SET is_booked = FALSE WHERE ers_id = ?`,
             [ers_id]
         );
+
+        if (incrementBlacklist) {
+            const incrementResult = await Patient.incrementCancellationCount(affectedPatientId);
+            if (!incrementResult) {
+                console.error(`[Appointment Model] Failed to increment cancellation count for patient ${affectedPatientId}`);
+            }
+        }
 
         if (updateAppointmentResult.affectedRows === 0 || updateSlotResult.affectedRows === 0) {
             await connection.rollback();
@@ -200,10 +282,50 @@ exports.cancelAppointment = async (appointmentId) => {
         }
 
         await connection.commit();
+        console.log(`[Appointment Model] Appointment ${appointmentId} cancelled for patient ${patientId}. Blacklist incremented: ${incrementBlacklist}`);
         return true;
     } catch (error) {
         await connection.rollback();
         console.error('Error cancelling appointment:', error);
+        throw error;
+    } finally {
+        connection.release();
+    }
+};
+
+exports.completeAppointment = async (appointmentId, patientId) => {
+    const connection = await db.getConnection();
+    try {
+        await connection.beginTransaction();
+
+        const [appointmentCheck] = await connection.execute(
+            `SELECT appointment_id, status FROM appointment WHERE appointment_id = ? AND patient_id = ?`,
+            [appointmentId, patientId]
+        );
+
+        if (appointmentCheck.length === 0 || appointmentCheck[0].status !== 'approved') {
+            await connection.rollback();
+            console.warn(`[Appointment Model] Attempt to complete non-existent, unauthorized or non-approved appointment: ${appointmentId} for patient ${patientId}`);
+            return false; 
+        }
+
+        const now = new Date();
+        const [result] = await connection.execute(
+            `UPDATE appointment SET status = 'completed', confirmCheckInTime = ? WHERE appointment_id = ?`,
+            [now, appointmentId]
+        );
+
+        if (result.affectedRows === 0) {
+            await connection.rollback();
+            return false;
+        }
+
+        await connection.commit();
+        console.log(`[Appointment Model] Appointment ${appointmentId} completed for patient ${patientId}.`);
+        return true;
+    } catch (error) {
+        await connection.rollback();
+        console.error('Error completing appointment:', error);
         throw error;
     } finally {
         connection.release();

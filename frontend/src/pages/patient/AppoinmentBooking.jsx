@@ -25,8 +25,9 @@ const AppoinmentBooking = () => {
 
     // Step 2 States
     const [selectedDate, setSelectedDate] = useState('');
-    const [availableSlots, setAvailableSlots] = useState([]);
-    const [selectedSlot, setSelectedSlot] = useState(null); // stores the actual slot object
+    const [availableTimeBlocks, setAvailableTimeBlocks] = useState([]); // ✅ เปลี่ยนชื่อ state ให้ชัดเจนขึ้น
+    const [selectedTimeBlock, setSelectedTimeBlock] = useState(null); 
+    const [selectedSlot, setSelectedSlot] = useState(null); // stores the actual ers_id
     const [showConfirmPopup, setShowConfirmPopup] = useState(false);
 
     // Step 3 States
@@ -53,9 +54,9 @@ const AppoinmentBooking = () => {
         fetchServices();
     }, [user, authLoading]); // Re-run if user or authLoading changes
 
-    // Fetch available slots when selectedService or selectedDate changes (Step 2)
+    // Fetch available time blocks when selectedService or selectedDate changes (Step 2)
     useEffect(() => {
-        const fetchAvailableSlots = async () => {
+        const fetchAvailableTimeBlocks = async () => {
             if (step === 2 && selectedService && selectedDate) {
                 setLoading(true);
                 setError('');
@@ -67,20 +68,21 @@ const AppoinmentBooking = () => {
                             serviceId: selectedService.service_id
                         }
                     });
-                    setAvailableSlots(response.data);
-                    setSelectedSlot(null); // Reset selected slot when date/service changes
+                    setAvailableTimeBlocks(response.data);
+                    setSelectedTimeBlock(null);
+                    setSelectedSlot(null);      
                 } catch (err) {
-                    console.error('Failed to fetch available slots:', err);
+                    console.error('Failed to fetch available time blocks:', err);
                     setError('ไม่สามารถโหลด Slot เวลาที่ว่างได้สำหรับวันนี้');
-                    setAvailableSlots([]);
+                    setAvailableTimeBlocks([]);
                 } finally {
                     setLoading(false);
                 }
             } else {
-                setAvailableSlots([]); // Clear slots if conditions not met
+                setAvailableTimeBlocks([]); // Clear time blocks if conditions not met
             }
         };
-        fetchAvailableSlots();
+        fetchAvailableTimeBlocks();
     }, [step, selectedService, selectedDate]);
 
     // Handle navigation between steps
@@ -93,19 +95,20 @@ const AppoinmentBooking = () => {
                 return;
             }
         } else if (step === 2) {
-            if (!selectedDate || !selectedSlot) {
-                setError('กรุณาเลือกวันและเวลาที่ต้องการนัดหมาย');
+            // ตรวจสอบแค่ Time Block เพราะ selectedSlot จะถูกเลือกโดยอัตโนมัติเมื่อเลือก Time Block
+            if (!selectedDate || !selectedTimeBlock) {
+                setError('กรุณาเลือกวันและช่วงเวลาที่ต้องการนัดหมาย');
                 return;
             }
-            console.log('selectedSlot:', selectedSlot);
+            // Prepare booking details for confirmation Popup
             setFinalBookingDetails({
                 serviceName: selectedService.service_name,
                 serviceDescription: selectedService.description,
                 appointmentDate: selectedDate,
-                appointmentTime: selectedSlot.slot_start,
-                slotEnd: selectedSlot.slot_end,
+                appointmentTime: selectedTimeBlock.slot_start,
+                slotEnd: selectedTimeBlock.slot_end,
                 symptoms: symptoms,
-                ers_id: selectedSlot.ers_id // Get ers_id from the slot object
+                ers_id: selectedSlot // selectedSlot คือ ers_id ที่ถูกเลือกโดยอัตโนมัติแล้ว
             });
             setShowConfirmPopup(true);
             console.log(showConfirmPopup);
@@ -118,13 +121,25 @@ const AppoinmentBooking = () => {
         setError('');
         setMessage('');
         setStep(prevStep => prevStep - 1);
-        setSelectedSlot(null); // Clear selected slot if going back from step 2
+        setSelectedTimeBlock(null); // Clear selected time block if going back from step 2
+        setSelectedSlot(null);      // Clear selected actual slot if going back from step 2
     };
 
     const handleServiceSelect = (service) => {
         setSelectedService(service);
         setExpandedServiceId(null); // Collapse the service card
     };
+
+    const handleTimeBlockSelect = (block) => {
+        // หากเลือก Time Block เดิม ให้ยกเลิกการเลือก
+        if (selectedTimeBlock?.slot_start === block.slot_start && selectedTimeBlock?.slot_end === block.slot_end) {
+            setSelectedTimeBlock(null);
+            setSelectedSlot(null);
+        } else {
+            setSelectedTimeBlock(block);
+            setSelectedSlot(block.ers_ids_in_block[0]); 
+        }
+    }
 
     const handleConfirmBooking = async () => {
         setShowConfirmPopup(false); // Close modal
@@ -140,7 +155,7 @@ const AppoinmentBooking = () => {
 
         try {
             const response = await axios.post(`${API_BASE_URL}/api/appointments`, {
-                ers_id: finalBookingDetails.ers_id,
+                ers_id: selectedSlot,
                 symptoms: finalBookingDetails.symptoms,
                 appointment_type: 'patient_booking'
             }, {
@@ -167,9 +182,6 @@ const AppoinmentBooking = () => {
     };
 
     const navigateToMyAppointments = () => {
-        // You would typically navigate to a dedicated page for "My Appointments"
-        // For now, let's just log or set a message.
-        // Example: navigate('/my-appointments'); (if you have react-router-dom setup)
         alert('นำทางไปยังหน้า "นัดหมายของฉัน"');
     };
 
@@ -292,19 +304,20 @@ const AppoinmentBooking = () => {
                             />
                         </div>
 
-                        {selectedDate && availableSlots.length > 0 ? (
+                        {selectedDate && availableTimeBlocks.length > 0 ? (
                             <div className="mb-6">
                                 <h4 className="text-lg font-semibold text-primary-default mb-4">Slot เวลาที่ว่างสำหรับ {getFormattedDate(selectedDate)}:</h4>
                                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                    {availableSlots.map(slot => (
+                                    {availableTimeBlocks.map(block => (
+                                        console.log('Available time block:', block),
                                         <button
-                                            key={slot.slot_start} // Assuming slot_start is unique for aggregated slots
-                                            onClick={() => setSelectedSlot(prev => prev?.slot_start === slot.slot_start ? null : slot)}
+                                            key={`${block.slot_start}-${block.slot_end}`}
+                                            onClick={() => handleTimeBlockSelect(block)} 
                                             className={`p-3 rounded-lg border-2 text-center transition-all duration-200
-                                                ${selectedSlot?.slot_start === slot.slot_start ? 'bg-secondary-default text-secondary-dark shadow-lg' : 'bg-white text-gray-800 border-gray-300 hover:bg-secondary-light hover:text-secondary-default'}`}
+                                                ${selectedTimeBlock?.slot_start === block.slot_start && selectedTimeBlock?.slot_end === block.slot_end ? 'bg-secondary-default text-secondary-dark shadow-lg' : 'bg-white text-gray-800 border-gray-300 hover:bg-secondary-light hover:text-secondary-default'}`}
                                         >
-                                            <span className="font-medium text-lg">{slot.slot_start.slice(0, 5)} - {slot.slot_end.slice(0, 5)}</span>
-                                            <span className="block text-sm">ว่าง: {slot.available_schedules_count} คิว</span>
+                                            <span className="font-medium text-lg">{block.slot_start.slice(0, 5)} - {block.slot_end.slice(0, 5)}</span>
+                                            <span className="block text-sm">ว่าง: {block.total_available_slots_in_time_block} คิว</span> 
                                         </button>
                                     ))}
                                 </div>
@@ -320,7 +333,7 @@ const AppoinmentBooking = () => {
                             <Button 
                                 variant="primary" 
                                 onClick={handleNextStep} 
-                                disabled={!selectedDate || !selectedSlot}
+                                disabled={!selectedDate || !selectedTimeBlock}
                             >
                                 ถัดไป <span className="ml-2">&rarr;</span>
                             </Button>
@@ -334,13 +347,12 @@ const AppoinmentBooking = () => {
                         <h3 className="text-3xl font-bold text-gray-800 mb-4">นัดหมายสำเร็จ!</h3>
                         <p className="text-gray-600 mb-6">นัดหมายของคุณกำลังรอการตอบกลับจากพยาบาล</p>
                         {finalBookingDetails && (
-                            <div className="bg-blue-50 p-4 rounded-lg text-left mb-6">
-                                <h4 className="font-semibold text-lg text-blue-800 mb-2">รายละเอียดนัดหมายของคุณ:</h4>
+                            <div className="bg-stromboli-50 p-4 rounded-lg text-left mb-6">
+                                <h4 className="font-semibold text-lg text-secondary-default mb-2">รายละเอียดนัดหมายของคุณ:</h4>
                                 <p><span className="font-medium">บริการ:</span> {finalBookingDetails.serviceName}</p>
                                 <p><span className="font-medium">วันนัด:</span> {getFormattedDate(finalBookingDetails.appointmentDate)}</p>
                                 <p><span className="font-medium">เวลา:</span> {finalBookingDetails.appointmentTime.slice(0,5)} - {finalBookingDetails.slotEnd.slice(0,5)} น.</p>
                                 <p><span className="font-medium">อาการเบื้องต้น:</span> {finalBookingDetails.symptoms}</p>
-                                {/* You might fetch doctor/room details here if needed from bookedAppointmentId */}
                             </div>
                         )}
                         <Button 

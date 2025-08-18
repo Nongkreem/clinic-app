@@ -19,6 +19,7 @@ import HeadNurseDashboard from './pages/head-nurse/HeadNurseDashboard';
 // Specific Pages for Patient
 import PatientDashboard from './pages/patient/PatientDashboard';
 import AppoinmentBooking from './pages/patient/AppoinmentBooking.jsx';
+import MyAppointment from './pages/patient/MyAppointment.jsx';
 
 // Specific Pages for Nures
 import NurseDashboard from './pages/nurse/NurseDashboard';
@@ -91,6 +92,7 @@ function App() {
           <Route path="patient">
             <Route path="home" element={<PatientDashboard />} />
             <Route path="create-appointment" element={<AppoinmentBooking/>}/>
+            <Route path="my-appointment" element={<MyAppointment/>}/>
           </Route>
         </Route>
 

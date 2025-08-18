@@ -66,12 +66,12 @@ exports.updateService = async (service_id, { service_name, description, price, a
             [service_name, description, price, service_id]
         );
 
-        await connection.execute('DELETE FROM advice_service WHERE service_id = ?', [service_id]);
+        await connection.execute('DELETE FROM adviceService WHERE service_id = ?', [service_id]);
 
         if (advice_ids && advice_ids.length > 0) {
             const adviceServiceValues = advice_ids.map(advice_id => [service_id, advice_id]);
             await connection.query(
-                'INSERT INTO advice_service (service_id, advice_id) VALUES ?', [adviceServiceValues]
+                'INSERT INTO adviceService (service_id, advice_id) VALUES ?', [adviceServiceValues]
             );
         }
         await connection.commit();
@@ -91,7 +91,7 @@ exports.deleteService = async (service_id) => {
     await connection.beginTransaction();
 
     // 1. Delete from advice_service (ON DELETE CASCADE ใน DB schema ก็ช่วยได้ แต่ทำในโค้ดก็ปลอดภัย)
-    await connection.execute('DELETE FROM advice_service WHERE service_id = ?', [service_id]);
+    await connection.execute('DELETE FROM adviceService WHERE service_id = ?', [service_id]);
 
     // 2. Delete from services table
     const [result] = await connection.execute('DELETE FROM services WHERE service_id = ?', [service_id]);
