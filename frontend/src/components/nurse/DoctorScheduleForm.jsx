@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import FormGroup from '../common/FormGroup';
 import Button from '../common/Button';
 import axios from 'axios';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react'; 
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
 
@@ -22,7 +22,6 @@ const dayOfWeekOptions = [
 /**
  * Helper function to generate all dates for a specific day of the week
  * within a given date range, based on local timezone.
- * (This function is duplicated here for frontend context)
  */
 const generateDatesForScheduleClient = (dayOfWeekIndex, startDateStr, endDateStr) => {
   const dates = [];
@@ -48,6 +47,39 @@ const generateDatesForScheduleClient = (dayOfWeekIndex, startDateStr, endDateStr
   }
   return dates;
 };
+
+/**
+ * Helper function to parse HH:MM time string to total minutes from midnight
+ */
+const parseTime = (timeStr) => {
+  if (!timeStr) return -1; // Handle empty/invalid time
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  return hours * 60 + minutes;
+};
+
+/**
+ * Helper function to check if two time ranges overlap
+ * @param {string} start1 - HH:MM string for first range start
+ * @param {string} end1 - HH:MM string for first range end
+ * @param {string} start2 - HH:MM string for second range start
+ * @param {string} end2 - HH:MM string for second range end
+ * @returns {boolean} True if ranges overlap, false otherwise
+ */
+const timesOverlap = (start1, end1, start2, end2) => {
+    const s1 = parseTime(start1);
+    const e1 = parseTime(end1);
+    const s2 = parseTime(start2);
+    const e2 = parseTime(end2);
+
+    // If any time is invalid, consider them not overlapping to prevent unexpected behavior
+    if (s1 === -1 || e1 === -1 || s2 === -1 || e2 === -1) {
+        return false;
+    }
+
+    // Overlap condition: (Start1 < End2) AND (End1 > Start2)
+    return s1 < e2 && e1 > s2;
+};
+
 
 /**
  * Component สำหรับ Form เพิ่ม/แก้ไขตารางออกตรวจของแพทย์
@@ -121,6 +153,8 @@ const DoctorScheduleForm = ({ initialData, onSaveSuccess, onCancel }) => {
           ...prev,
           [initialData.service_id]: doctorsRes.data.map(item => ({ value: item.doctor_id, label: item.full_name }))
         }));
+        // For initial data, we don't apply in-form filtering initially, as it's a single entry.
+        // It will be filtered later if user adds more rows.
         setFetchedRoomsByScheduleRow(prev => ({
           ...prev,
           [initialData.tempId]: roomsRes.data.map(item => ({ value: item.room_id.toString(), label: item.room_name }))
@@ -188,6 +222,7 @@ const DoctorScheduleForm = ({ initialData, onSaveSuccess, onCancel }) => {
         if (schedule.tempId === tempIdToUpdate) {
           const updatedSchedule = { ...schedule, [field]: value };
 
+          // Reset doctor and room if service changes
           if (field === 'serviceId') {
             updatedSchedule.doctorId = '';
             updatedSchedule.roomId = '';
@@ -206,16 +241,17 @@ const DoctorScheduleForm = ({ initialData, onSaveSuccess, onCancel }) => {
                   console.error(`Frontend: Failed to fetch doctors for service ${value}:`, err);
                 });
 
+              // Clear rooms for this specific row if service changes, as new rooms might be needed
               setFetchedRoomsByScheduleRow(prev => { 
                 const newState = { ...prev };
-                delete newState[value];
+                delete newState[value]; 
                 return newState;
               });
 
-            } else { 
+            } else { // If service is cleared
               setFetchedDoctorsByService(prev => {
                 const newState = { ...prev };
-                delete newState[value];
+                delete newState[value]; 
                 return newState;
               });
               setFetchedRoomsByScheduleRow(prev => {
@@ -230,33 +266,59 @@ const DoctorScheduleForm = ({ initialData, onSaveSuccess, onCancel }) => {
           const currentTimeStart = (field === 'timeStart') ? value : updatedSchedule.timeStart;
           const currentTimeEnd = (field === 'timeEnd') ? value : updatedSchedule.timeEnd;
           
-          if (!initialData && selectedDayOfWeek && startDate && currentServiceId && currentTimeStart && currentTimeEnd) {
-            // For new recurring schedule, pick the first actual date for the chosen day of week
-            // to query for room availability. This is an approximation for room filtering during input.
-            // The actual backend check for room overlap will occur for ALL generated dates.
-            const tempDates = generateDatesForScheduleClient(parseInt(selectedDayOfWeek, 10), startDate, endDate);
-            const firstRecurringDate = tempDates.length > 0 ? tempDates[0] : null;
+          // Only fetch rooms if all necessary time/service info is available
+          if ((!initialData && selectedDayOfWeek && startDate && currentServiceId && currentTimeStart && currentTimeEnd) ||
+              (initialData && currentServiceId && currentTimeStart && currentTimeEnd)) {
+            
+            const scheduleDateToQuery = initialData ? initialData.schedule_date.split('T')[0] : 
+                                       (generateDatesForScheduleClient(parseInt(selectedDayOfWeek, 10), startDate, endDate)[0] || null);
 
-            if (firstRecurringDate) {
+            if (scheduleDateToQuery) {
               const token = localStorage.getItem('token');
               const headers = { Authorization: `Bearer ${token}` };
 
-              // ✅ FIX: Use params for query string
               axios.get(`${API_BASE_URL}/api/rooms/available`, { 
                 headers, 
                 params: {
-                  scheduleDate: firstRecurringDate, // Use the first actual date
+                  scheduleDate: scheduleDateToQuery, 
                   timeStart: currentTimeStart,
                   timeEnd: currentTimeEnd,
                   serviceId: currentServiceId
                 }
               })
               .then(res => {
+                const availableRoomsFromBackend = res.data; 
+
+                // ✅ Collect rooms and their time slots from other rows in the *current form*
+                const roomsOccupiedInFormWithTimes = prevSchedules
+                  .filter(s => s.tempId !== tempIdToUpdate) // Exclude the current row being updated
+                  .map(s => ({
+                    roomId: s.roomId,
+                    timeStart: s.timeStart,
+                    timeEnd: s.timeEnd
+                  }))
+                  .filter(s => s.roomId && s.timeStart && s.timeEnd); // Only include valid selections
+
+                // ✅ Filter out rooms that are occupied by other rows in this form *for overlapping times*
+                const filteredRooms = availableRoomsFromBackend.filter(backendRoom => {
+                  const isOccupiedByAnotherFormRow = roomsOccupiedInFormWithTimes.some(occupied => {
+                    return (
+                      occupied.roomId === backendRoom.room_id.toString() &&
+                      // ✅ แก้ไขตรงนี้: ใช้ currentTimeStart และ currentTimeEnd ที่ถูกต้อง
+                      timesOverlap(occupied.timeStart, occupied.timeEnd, currentTimeStart, currentTimeEnd) 
+                    );
+                  });
+                  return !isOccupiedByAnotherFormRow;
+                }).map(item => ({ value: item.room_id.toString(), label: item.room_name }));
+
                 setFetchedRoomsByScheduleRow(prev => ({
                   ...prev,
-                  [tempIdToUpdate]: res.data.map(item => ({ value: item.room_id.toString(), label: item.room_name }))
+                  [tempIdToUpdate]: filteredRooms
                 }));
-                if (updatedSchedule.roomId && !res.data.some(room => room.room_id.toString() === updatedSchedule.roomId)) {
+
+                // ✅ If the previously selected room is no longer in the filtered list, clear it
+                if (updatedSchedule.roomId && 
+                    !filteredRooms.some(room => room.value === updatedSchedule.roomId)) {
                   updatedSchedule.roomId = '';
                 }
               })
@@ -265,39 +327,12 @@ const DoctorScheduleForm = ({ initialData, onSaveSuccess, onCancel }) => {
                 setFetchedRoomsByScheduleRow(prev => ({ ...prev, [tempIdToUpdate]: [] }));
                 updatedSchedule.roomId = '';
               });
-            } else {
+            } else { // No valid recurring date or initialData.schedule_date
               setFetchedRoomsByScheduleRow(prev => ({ ...prev, [tempIdToUpdate]: [] }));
               updatedSchedule.roomId = '';
             }
-          } else if (initialData && currentServiceId && currentTimeStart && currentTimeEnd) { // For editing a single schedule
-            const token = localStorage.getItem('token');
-            const headers = { Authorization: `Bearer ${token}` };
-            // ✅ FIX: Use params for query string
-            axios.get(`${API_BASE_URL}/api/rooms/available`, { 
-              headers, 
-              params: {
-                scheduleDate: initialData.schedule_date.split('T')[0],
-                timeStart: currentTimeStart,
-                timeEnd: currentTimeEnd,
-                serviceId: currentServiceId
-              }
-            })
-            .then(res => {
-              setFetchedRoomsByScheduleRow(prev => ({
-                ...prev,
-                [tempIdToUpdate]: res.data.map(item => ({ value: item.room_id.toString(), label: item.room_name }))
-              }));
-              if (updatedSchedule.roomId && !res.data.some(room => room.room_id.toString() === updatedSchedule.roomId)) {
-                  updatedSchedule.roomId = '';
-              }
-            })
-            .catch(err => {
-              console.error(`Frontend: Failed to fetch available rooms for row ${tempIdToUpdate} in edit mode:`, err);
-              setFetchedRoomsByScheduleRow(prev => ({ ...prev, [tempIdToUpdate]: [] }));
-              updatedSchedule.roomId = '';
-            });
           }
-          else {
+          else { // Not enough info to fetch rooms (e.g., missing service, time, or date range)
             setFetchedRoomsByScheduleRow(prev => ({ ...prev, [tempIdToUpdate]: [] }));
             updatedSchedule.roomId = '';
           }
@@ -335,6 +370,9 @@ const DoctorScheduleForm = ({ initialData, onSaveSuccess, onCancel }) => {
     }
 
     const scheduleEntriesToSend = [];
+    // ✅ NEW: ตรวจสอบความซ้ำซ้อนของห้อง/เวลาในฟอร์มก่อนส่งไปยัง Backend
+    const roomTimeOverlapMap = {}; // Key: roomId, Value: Array of { timeStart, timeEnd }
+
     for (const entry of schedules) {
       const { serviceId, doctorId, roomId, timeStart, timeEnd } = entry;
 
@@ -343,11 +381,6 @@ const DoctorScheduleForm = ({ initialData, onSaveSuccess, onCancel }) => {
         setLoading(false);
         return;
       }
-
-      const parseTime = (timeStr) => {
-        const [hours, minutes] = timeStr.split(':').map(Number);
-        return hours * 60 + minutes;
-      };
 
       const startMinutes = parseTime(timeStart);
       const endMinutes = parseTime(timeEnd);
@@ -361,6 +394,22 @@ const DoctorScheduleForm = ({ initialData, onSaveSuccess, onCancel }) => {
         setError('เวลาออกตรวจต้องอยู่ระหว่าง 08:00 ถึง 16:00');
         setLoading(false);
         return;
+      }
+
+      // ✅ ตรวจสอบความซ้ำซ้อนของห้อง/เวลาในฟอร์ม
+      if (roomTimeOverlapMap[roomId]) {
+          const hasOverlap = roomTimeOverlapMap[roomId].some(existingSlot => 
+              timesOverlap(existingSlot.timeStart, existingSlot.timeEnd, timeStart, timeEnd)
+          );
+          if (hasOverlap) {
+              const roomName = fetchedRoomsByScheduleRow[entry.tempId]?.find(r => r.value === roomId)?.label || `Room ID ${roomId}`;
+              setError(`ห้องตรวจ '${roomName}' ถูกใช้ซ้ำซ้อนในช่วงเวลาที่ทับซ้อนกันในรายการอื่น กรุณาแก้ไข`);
+              setLoading(false);
+              return;
+          }
+          roomTimeOverlapMap[roomId].push({ timeStart, timeEnd });
+      } else {
+          roomTimeOverlapMap[roomId] = [{ timeStart, timeEnd }];
       }
 
       scheduleEntriesToSend.push({
@@ -401,7 +450,7 @@ const DoctorScheduleForm = ({ initialData, onSaveSuccess, onCancel }) => {
       if (err.response && err.response.status === 409) {
         setError(err.response.data.message);
       } else {
-        setError(err.response?.data?.message || 'เกิดข้อผิดพลาดในการบันทารางออกตรวจ');
+        setError(err.response?.data?.message || 'เกิดข้อผิดพลาดในการบันตารางออกตรวจ');
       }
     } finally {
       setLoading(false);
@@ -474,81 +523,84 @@ const DoctorScheduleForm = ({ initialData, onSaveSuccess, onCancel }) => {
         <label className="block text-gray-700 text-sm font-bold mb-2">
           รายละเอียดตารางออกตรวจ (สำหรับแต่ละวันในแบบประจำ) <span className="text-red-500">*</span>
         </label>
-        {schedules.map((schedule, index) => (
-          <div key={schedule.tempId} className="flex flex-col md:flex-row items-end gap-2 mb-4 p-3 border rounded-lg bg-gray-50">
-            <div className="flex-grow grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-              <FormGroup
-                as="select"
-                label="บริการ"
-                id={`service-${schedule.tempId}`}
-                name={`service-${schedule.tempId}`}
-                value={schedule.serviceId}
-                onChange={(e) => handleScheduleChange(schedule.tempId, 'serviceId', e.target.value)}
-                options={allServiceOptions}
-                required
-                className="mb-0"
-              />
-              <FormGroup
-                as="select"
-                label="แพทย์"
-                id={`doctor-${schedule.tempId}`}
-                name={`doctor-${schedule.tempId}`}
-                value={schedule.doctorId}
-                onChange={(e) => handleScheduleChange(schedule.tempId, 'doctorId', e.target.value)}
-                options={fetchedDoctorsByService[schedule.serviceId] || []}
-                required
-                className="mb-0"
-                disabled={!schedule.serviceId}
-              />
-              <FormGroup
-                as="select"
-                label="ห้องตรวจ"
-                id={`room-${schedule.tempId}`}
-                name={`room-${schedule.tempId}`}
-                value={schedule.roomId}
-                onChange={(e) => handleScheduleChange(schedule.tempId, 'roomId', e.target.value)}
-                options={fetchedRoomsByScheduleRow[schedule.tempId] || []} 
-                required
-                className="mb-0"
-                disabled={!schedule.serviceId || !schedule.timeStart || !schedule.timeEnd} 
-              />
-              <FormGroup
-                label="เวลาเริ่มต้น (08:00 - 16:00)"
-                type="time"
-                id={`timeStart-${schedule.tempId}`}
-                name={`timeStart-${schedule.tempId}`}
-                value={schedule.timeStart}
-                onChange={(e) => handleScheduleChange(schedule.tempId, 'timeStart', e.target.value)}
-                min="08:00"
-                max="16:00"
-                required
-                className="mb-0"
-              />
-              <FormGroup
-                label="เวลาสิ้นสุด (08:00 - 16:00)"
-                type="time"
-                id={`timeEnd-${schedule.tempId}`}
-                name={`timeEnd-${schedule.tempId}`}
-                value={schedule.timeEnd}
-                onChange={(e) => handleScheduleChange(schedule.tempId, 'timeEnd', e.target.value)}
-                min="08:00"
-                max="16:00"
-                required
-                className="mb-0"
-              />
+        <div className="max-h-96 overflow-y-auto pr-2"> 
+          {schedules.map((schedule, index) => (
+            <div key={schedule.tempId} className="relative flex flex-col md:flex-row items-end gap-2 mb-4 p-3 border rounded-lg bg-gray-50"> 
+              <div className="flex-grow grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                <FormGroup
+                  as="select"
+                  label="บริการ"
+                  id={`service-${schedule.tempId}`}
+                  name={`service-${schedule.tempId}`}
+                  value={schedule.serviceId}
+                  onChange={(e) => handleScheduleChange(schedule.tempId, 'serviceId', e.target.value)}
+                  options={allServiceOptions}
+                  required
+                  className="mb-0"
+                />
+                <FormGroup
+                  as="select"
+                  label="แพทย์"
+                  id={`doctor-${schedule.tempId}`}
+                  name={`doctor-${schedule.tempId}`}
+                  value={schedule.doctorId}
+                  onChange={(e) => handleScheduleChange(schedule.tempId, 'doctorId', e.target.value)}
+                  options={fetchedDoctorsByService[schedule.serviceId] || []}
+                  required
+                  className="mb-0"
+                  disabled={!schedule.serviceId}
+                />
+                <FormGroup
+                  as="select"
+                  label="ห้องตรวจ"
+                  id={`room-${schedule.tempId}`}
+                  name={`room-${schedule.tempId}`}
+                  value={schedule.roomId}
+                  onChange={(e) => handleScheduleChange(schedule.tempId, 'roomId', e.target.value)}
+                  options={fetchedRoomsByScheduleRow[schedule.tempId] || []} 
+                  required
+                  className="mb-0"
+                  disabled={!schedule.serviceId || !schedule.timeStart || !schedule.timeEnd} 
+                />
+                <FormGroup
+                  label="เวลาเริ่มต้น (08:00 - 16:00)"
+                  type="time"
+                  id={`timeStart-${schedule.tempId}`}
+                  name={`timeStart-${schedule.tempId}`}
+                  value={schedule.timeStart}
+                  onChange={(e) => handleScheduleChange(schedule.tempId, 'timeStart', e.target.value)}
+                  min="08:00"
+                  max="16:00"
+                  required
+                  className="mb-0"
+                />
+                <FormGroup
+                  label="เวลาสิ้นสุด (08:00 - 16:00)"
+                  type="time"
+                  id={`timeEnd-${schedule.tempId}`}
+                  name={`timeEnd-${schedule.tempId}`}
+                  value={schedule.timeEnd}
+                  onChange={(e) => handleScheduleChange(schedule.tempId, 'timeEnd', e.target.value)}
+                  min="08:00"
+                  max="16:00"
+                  required
+                  className="mb-0"
+                />
+              </div>
+              {schedules.length > 1 && (
+                <button 
+                  type="button"
+                  onClick={() => handleRemoveScheduleRow(schedule.tempId)}
+                  className="absolute top-2 right-2 h-6 w-6 flex items-center justify-center rounded-full bg-red-200 text-red-700 hover:bg-red-300 focus:outline-none focus:ring-2 focus:ring-red-400 text-xl font-bold"
+                  aria-label="ลบรายละเอียดตารางออกตรวจนี้" 
+                >
+                  -
+                </button>
+              )}
             </div>
-            {schedules.length > 1 && (
-              <Button
-                type="button"
-                variant="danger"
-                onClick={() => handleRemoveScheduleRow(schedule.tempId)}
-                className="p-2 h-10 w-10 flex items-center justify-center rounded-lg md:self-center"
-              >
-                <Trash2 size={18} />
-              </Button>
-            )}
-          </div>
-        ))}
+          ))}
+        </div> 
+
         <Button
           type="button"
           variant="secondary"

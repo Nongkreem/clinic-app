@@ -178,7 +178,7 @@ const AppointmentReqManage = () => {
 
   const getStatusDisplay = (status) => {
     switch (status) {
-      case 'pending': return <span className="px-2 py-1 text-xs font-semibold rounded-full text-yellow-600">รอดำเนินการ</span>;
+      case 'pending': return <span className="px-2 py-1 text-xs font-semibold rounded-full text-yellow-600">รออนุมัติ</span>;
       case 'approved': return <span className="px-2 py-1 text-xs font-semibold rounded-full text-green-800">อนุมัติแล้ว</span>;
       case 'rejected': return <span className="px-2 py-1 text-xs font-semibold rounded-full text-red-800">ถูกปฏิเสธ</span>;
       case 'completed': return <span className="px-2 py-1 text-xs font-semibold rounded-full text-blue-800">เสร็จสิ้น</span>;
@@ -273,8 +273,8 @@ const AppointmentReqManage = () => {
             <table className="min-w-full bg-white rounded-lg overflow-hidden">
               <thead className="bg-pavlova-100">
                 <tr>
-                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">HN</th>
-                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">ชื่อผู้ป่วย</th>
+                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">บริการ</th>
+                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">วันเเละเวลาจอง</th>
                   <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700"></th>
                 </tr>
               </thead>
@@ -282,8 +282,8 @@ const AppointmentReqManage = () => {
                 {appointments.map((appointment) => (
                   <React.Fragment key={appointment.appointment_id}>
                     <tr className="border-b border-gray-200 hover:bg-gray-50">
-                      <td className="py-3 px-4 text-sm text-gray-800">{appointment.hn}</td>
-                      <td className="py-3 px-4 text-sm text-gray-800">{appointment.patient_first_name} {appointment.patient_last_name}</td>
+                      <td className="py-3 px-4 text-sm text-gray-800">{appointment.service_name}</td>
+                      <td className="py-3 px-4 text-sm text-gray-800">{getFormattedDate(appointment.appointment_date)} เวลานัดหมาย {getFormattedTime(appointment.appointment_time)}</td>
                       <td className="py-3 px-4 text-sm text-gray-800 w-16"> {/* Fixed width for button column */}
                         <button
                           onClick={() => handleToggleDetails(appointment.appointment_id)}
@@ -303,28 +303,25 @@ const AppointmentReqManage = () => {
                         <td colSpan="3" className="p-4"> {/* Span across all columns of the main row */}
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-2 gap-x-4 text-sm text-gray-700">
                             <div>
-                              <span className="font-semibold">บริการ:</span> {appointment.service_name}
+                              <span className="font-semibold">HN:</span> {appointment.hn}
+                            </div>
+                            <div>
+                              <span className="font-semibold">ชื่อ-นามสกุล:</span> {appointment.patient_first_name} {appointment.patient_last_name}
                             </div>
                             <div>
                               <span className="font-semibold">อาการเบื้องต้น:</span> {appointment.symptoms}
                             </div>
                             <div>
-                              <span className="font-semibold">วันที่นัดหมาย:</span> {getFormattedDate(appointment.appointment_date)}
-                            </div>
-                            <div>
-                              <span className="font-semibold">เวลานัดหมาย:</span> {getFormattedTime(appointment.appointment_time)}
-                            </div>
-                            <div>
                               <span className="font-semibold">ประเภทนัดหมาย:</span> <span className="capitalize">{appointment.appointmentType.replace(/_/g, ' ')}</span>
-                            </div>
-                            <div>
-                              <span className="font-semibold">สถานะ:</span> {getStatusDisplay(appointment.status)}
                             </div>
                             <div>
                               <span className="font-semibold">แพทย์:</span> {appointment.doctor_full_name}
                             </div>
                             <div>
                               <span className="font-semibold">ห้องตรวจ:</span> {appointment.room_name}
+                            </div>
+                             <div>
+                              <span className="font-semibold">สถานะ:</span> {getStatusDisplay(appointment.status)}
                             </div>
                             {appointment.status === 'rejected' && appointment.rejection_reason && (
                               <div className="col-span-full mt-2 p-2 bg-red-100 rounded-md">

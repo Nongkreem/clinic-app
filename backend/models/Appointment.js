@@ -202,7 +202,23 @@ exports.getFilteredAppointments = async (filters = {}) => {
 };
 
 exports.updateAppointmentStatus = async (appointmentId, newStatus, confirmCheckInTime = null, rejectionReason = null) => {
+    const connection = await db.getConnection();
     try {
+        await connection.beginTransaction();
+
+        // ดึง ers_id ก่อนอัปเดตสถานะ 
+        const [appointmentInfo] = await connection.execute(
+            `SELECT ers_id FROM appointment WHERE appointment_id = ?`,
+            [appointmentId]
+        );
+
+        if (appointmentInfo.length === 0) {
+            await connection.rollback();
+            return false; // ไม่พบนัดหมาย
+        }
+        const ers_id = appointmentInfo[0].ers_id;
+
+
         let query = `UPDATE appointment SET status = ?`;
         const params = [newStatus];
 
@@ -215,7 +231,7 @@ exports.updateAppointmentStatus = async (appointmentId, newStatus, confirmCheckI
             query += `, rejection_reason = ?`;
             params.push(rejectionReason);
         } else {
-            // หากเปลี่ยนสถานะอื่นที่ไม่ใช่ 'rejected', ให้ clear เหตุผลการปฏิเสธ (ถ้ามี)
+            // หากเปลี่ยนสถานะอื่นที่ไม่ใช่ 'rejected' ให้ clear เหตุผลการปฏิเสธ
             query += `, rejection_reason = NULL`;
         }
 
@@ -223,10 +239,31 @@ exports.updateAppointmentStatus = async (appointmentId, newStatus, confirmCheckI
         params.push(appointmentId);
 
         const [result] = await db.execute(query, params);
-        return result.affectedRows > 0;
+
+        if (result.affectedRows === 0) {
+            await connection.rollback();
+            return false; 
+        }
+
+        // 3. คืน Slot หากสถานะใหม่เป็น 'rejected' หรือ 'cancelled'
+        if (newStatus === 'rejected' || newStatus === 'cancelled') {
+            const [slotUpdateResult] = await connection.execute(
+                `UPDATE examRoomSlots SET is_booked = FALSE WHERE ers_id = ?`,
+                [ers_id]
+            );
+            if (slotUpdateResult.affectedRows === 0) {
+                console.warn(`[Appointment Model] ไม่สามารถอัปเดต examRoomSlots สำหรับ ers_id ${ers_id} ระหว่างการเปลี่ยนสถานะเป็น ${newStatus}.`);
+            } else {
+                console.log(`[Appointment Model] Slot ers_id ${ers_id} ถูกคืนสถานะว่างแล้ว เนื่องจากนัดหมายถูกเปลี่ยนเป็น ${newStatus}.`);
+            }
+        }
+        await connection.commit();
+        return true;
     } catch (error) {
         console.error('Error updating appointment status:', error);
         throw error;
+    } finally {
+        connection.release();
     }
 };
 
