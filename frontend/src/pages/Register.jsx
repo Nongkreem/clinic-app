@@ -1,85 +1,9 @@
 import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import FormGroup from '../components/common/FormGroup'; // ✅ Import FormGroup
+import Button from '../components/common/Button';     // ✅ Import Button
 
-// A simplified FormGroup component that correctly passes props to the input element
-const FormGroup = ({ label, id, value, type, placeholder, onChange, children, ...rest }) => {
-  return (
-    <div className="mb-4">
-      <label htmlFor={id} className="block text-gray-700 text-sm font-bold mb-2">
-        {label}
-      </label>
-      {type === 'select' ? (
-        <select
-          id={id}
-          value={value}
-          onChange={onChange}
-          className="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-          {...rest}
-        >
-          {children}
-        </select>
-      ) : (
-        <input
-          id={id}
-          type={type}
-          value={value}
-          onChange={onChange}
-          placeholder={placeholder}
-          className="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-          {...rest}
-        />
-      )}
-    </div>
-  );
-};
-
-// A simplified Button component
-const Button = ({ children, type, variant, className, disabled, onClick }) => {
-  const baseClasses = "font-bold py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors";
-  let variantClasses = "";
-  if (variant === "success") {
-    variantClasses = "bg-green-500 hover:bg-green-600 text-white focus:ring-green-500";
-  }
-  if (variant === "primary") {
-    variantClasses = "bg-blue-500 hover:bg-blue-600 text-white focus:ring-blue-500";
-  }
-  if (variant === "secondary") {
-    variantClasses = "bg-gray-500 hover:bg-gray-600 text-white focus:ring-gray-500";
-  }
-  if (disabled) {
-    variantClasses = "bg-gray-400 text-gray-600 cursor-not-allowed";
-  }
-  
-  return (
-    <button type={type} className={`${baseClasses} ${variantClasses} ${className}`} disabled={disabled} onClick={onClick}>
-      {children}
-    </button>
-  );
-};
-
-// Mock useAuth hook for demonstration purposes
-const useAuth = () => {
-    const [loading, setLoading] = useState(false);
-    
-    // The register function remains unchanged as per the user's request.
-    const register = async (email, password, role, hn, firstName, lastName, dateOfBirth, phoneNumber, gender) => {
-        setLoading(true);
-        // Simulate an API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // Mock successful registration
-        if (email && password) {
-            setLoading(false);
-            return { success: true, message: 'ลงทะเบียนสำเร็จ' };
-        }
-        
-        // Mock a failed registration
-        setLoading(false);
-        return { success: false, message: 'ลงทะเบียนไม่สำเร็จ' };
-    };
-
-    return { register, loading };
-};
 
 const Register = () => {
   const [email, setEmail] = useState('');
@@ -95,13 +19,11 @@ const Register = () => {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const { register, loading } = useAuth();
-  const navigate = useNavigate();
-
+  const navigate = useNavigate(); 
   // State to manage the steps of the form
   const [step, setStep] = useState(1);
 
   const handleNext = () => {
-    // Client-side validation for Step 1
     setError('');
     
     if (!hn || !firstName || !lastName || !dateOfBirth || !gender) {
@@ -109,7 +31,6 @@ const Register = () => {
       return;
     }
     
-    // New age validation
     const birthDate = new Date(dateOfBirth);
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
@@ -125,7 +46,6 @@ const Register = () => {
       return;
     }
     
-    // Gender validation is now redundant but kept as per the user's request not to change functions.
     if (gender !== 'female') {
       setError('คลินิกนี้สำหรับผู้หญิงเท่านั้น');
       return;
@@ -149,7 +69,6 @@ const Register = () => {
     setError('');
     setMessage('');
 
-    // Client-side validation for Step 2
     if (password !== confirmPassword) {
       setError('รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน');
       return;
@@ -158,8 +77,7 @@ const Register = () => {
       setError('เบอร์โทรศัพท์ต้องเป็นตัวเลข 10 หลัก');
       return;
     }
-    
-    // Call the register function from AuthContext with all collected data
+
     const result = await register(
       email,
       password,
@@ -176,7 +94,7 @@ const Register = () => {
       setMessage(result.message + ' ตอนนี้คุณสามารถเข้าสู่ระบบได้แล้ว');
       setTimeout(() => {
         console.log('Navigating to login page...');
-        // navigate('/login');
+        navigate('/login');
       }, 2000); 
     } else {
       setError(result.message);
@@ -225,6 +143,7 @@ const Register = () => {
 
           {step === 1 && (
             <>
+              {/* Using imported FormGroup Component */}
               <FormGroup
                 label="HN (หมายเลขผู้ป่วย 7 หลัก)"
                 type="text"
@@ -238,19 +157,20 @@ const Register = () => {
                 title="กรุณากรอก HN เป็นตัวเลข 7 หลัก"
               />
 
-              {/* Updated Gender FormGroup with only one option */}
+              {/* Using imported FormGroup Component with select type */}
               <FormGroup
                 label="เพศ"
-                type="select"
+                as="select"
                 id="gender"
                 name="gender"
                 value={gender}
                 onChange={(e) => setGender(e.target.value)}
                 required
+                options={[{value: 'female', label: 'หญิง'}]}
               >
-                <option value="female">หญิง</option>
               </FormGroup>
 
+              {/* Using imported FormGroup Component */}
               <FormGroup
                 label="ชื่อ"
                 type="text"
@@ -262,6 +182,7 @@ const Register = () => {
                 required
               />
 
+              {/* Using imported FormGroup Component */}
               <FormGroup
                 label="นามสกุล"
                 type="text"
@@ -273,6 +194,7 @@ const Register = () => {
                 required
               />
 
+              {/* Using imported FormGroup Component */}
               <FormGroup
                 label="วันเดือนปีเกิด"
                 type="date"
@@ -284,6 +206,7 @@ const Register = () => {
               />
 
               <div className="flex justify-end mt-6">
+                {/* Using imported Button Component */}
                 <Button type="button" 
                 className="w-full bg-primary-default hover:bg-stromboli-400 text-white"
                 onClick={handleNext}>
@@ -295,20 +218,6 @@ const Register = () => {
 
           {step === 2 && (
             <>
-              <FormGroup
-                label="HN (หมายเลขผู้ป่วย 7 หลัก)"
-                type="text"
-                id="hn"
-                name="hn"
-                value={hn}
-                onChange={(e) => setHn(e.target.value)}
-                placeholder="เช่น 1234567"
-                required
-                pattern="\d{7}"
-                title="กรุณากรอก HN เป็นตัวเลข 7 หลัก"
-                disabled
-              />
-
               <FormGroup
                 label="เบอร์โทรศัพท์"
                 type="tel"
@@ -322,6 +231,7 @@ const Register = () => {
                 title="กรุณากรอกเบอร์โทรศัพท์เป็นตัวเลข 10 หลัก"
               />
 
+              {/* Using imported FormGroup Component */}
               <FormGroup
                 label="อีเมล"
                 type="email"
@@ -333,6 +243,7 @@ const Register = () => {
                 required
               />
 
+              {/* Using imported FormGroup Component */}
               <FormGroup
                 label="รหัสผ่าน"
                 type="password"
@@ -344,6 +255,7 @@ const Register = () => {
                 required
               />
 
+              {/* Using imported FormGroup Component */}
               <FormGroup
                 label="ยืนยันรหัสผ่าน"
                 type="password"
@@ -356,11 +268,13 @@ const Register = () => {
               />
 
               <div className="flex justify-between mt-6">
+                {/* Using imported Button Component */}
                 <Button type="button" variant="secondary" className="w-1/2 mr-2" onClick={handleBack}>
                   ย้อนกลับ
                 </Button>
+                {/* Using imported Button Component */}
                 <Button type="submit" variant="success" 
-                className="w-1/2 ml-2  bg-primary-default hover:bg-stromboli-400 text-white"  disabled={loading}>
+                className="w-1/2 ml-2  bg-primary-default hover:bg-stromboli-400 text-white"  disabled={loading}>
                   {loading ? 'กำลังลงทะเบียน...' : 'ลงทะเบียน'}
                 </Button>
               </div>

@@ -1,10 +1,11 @@
 // frontend/src/pages/MyAppointment.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext'; 
 import Button from '../../components/common/Button';
 import Popup from '../../components/common/Popup'; 
-import { CalendarDays, Clock, CheckCircle, XCircle, FileText, Info } from 'lucide-react'; 
+import { FileText, Info } from 'lucide-react'; 
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
 
@@ -26,6 +27,8 @@ const MyAppointment = () => {
     // State for Appointment Card Popup
     const [showAppointmentCardPopup, setShowAppointmentCardPopup] = useState(false);
     const [appointmentCardDetails, setAppointmentCardDetails] = useState(null);
+
+    const navigate = useNavigate();
 
     // Fetch patient's blacklist status on mount and after actions
     const fetchBlacklistStatus = async () => {
@@ -71,7 +74,6 @@ const MyAppointment = () => {
     }, [patientId, authLoading]); 
 
     const willCauseBlacklist = (appointment) => {
-        // Only applies to approved appointments
         if (appointment.status !== 'approved') return false;
 
         const appointmentDateTime = new Date(`${appointment.appointment_date}T${appointment.appointment_time}`);
@@ -166,10 +168,10 @@ const MyAppointment = () => {
 
     const getStatusDisplay = (status) => {
         switch (status) {
-            case 'pending': return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">รอดำเนินการ</span>;
+            case 'pending': return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">รออนุมัติ</span>;
             case 'approved': return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">อนุมัติแล้ว</span>;
             case 'rejected': return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">ถูกปฏิเสธ</span>;
-            case 'completed': return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">เสร็จสิ้น</span>;
+            case 'completed': return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">เข้ารับบริการ</span>;
             case 'cancelled': return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">ยกเลิกแล้ว</span>;
             default: return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">{status}</span>;
         }
@@ -196,9 +198,9 @@ const MyAppointment = () => {
             )}
 
             {!loading && appointments.length === 0 ? (
-                <div className="bg-white p-6 rounded-lg shadow-md text-center">
+                <div className="bg-white p-6 text-center">
                     <p className="text-gray-600">คุณยังไม่มีนัดหมายในระบบ</p>
-                    <p className="mt-2 text-gray-500 text-sm">ลองสร้างนัดหมายใหม่ได้เลย!</p>
+                    <p className="mt-2 text-secondary-default text-sm cursor-pointer hover:text-pavlova-600" onClick={()=>navigate('/patient/create-appointment')}>ลองสร้างนัดหมายใหม่ได้เลย!</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
