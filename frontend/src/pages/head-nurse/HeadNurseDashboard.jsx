@@ -1,10 +1,13 @@
 import React from 'react'
+import { Outlet } from 'react-router-dom'
 
 const HeadNurseDashboard = () => {
   return (
     <div>
-      Head Nurse Dashboard
-      <p>ยินดีต้อนรับ, หัวหน้าพยาบาล!</p>
+      {/* Child Route */}
+      <div>
+        <Outlet/> 
+      </div>
     </div>
   )
 }

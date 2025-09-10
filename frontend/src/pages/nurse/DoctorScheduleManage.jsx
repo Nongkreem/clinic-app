@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import ManagePageTemplate from '../../components/common/ManagePageTemplate';
 import DoctorScheduleForm from '../../components/nurse/DoctorScheduleForm';
-import FormGroup from '../../components/common/FormGroup'; // For filter dropdown
+import FormGroup from '../../components/common/FormGroup'; 
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
 
 const DoctorScheduleManage = () => {
-  const [filterServiceId, setFilterServiceId] = useState(''); // State for service filter
-  const [allServiceOptions, setAllServiceOptions] = useState([]); // Options for filter dropdown
+  const [filterServiceId, setFilterServiceId] = useState(''); 
+  const [allServiceOptions, setAllServiceOptions] = useState([]); 
 
   // Fetch all services for the filter dropdown
   useEffect(() => {
@@ -19,7 +19,7 @@ const DoctorScheduleManage = () => {
           headers: { Authorization: `Bearer ${token}` }
         });
         setAllServiceOptions([
-          { value: '', label: 'ทั้งหมด' }, // Option to show all services
+          { value: '', label: 'ทั้งหมด' },
           ...response.data.map(item => ({
             value: item.service_id.toString(),
             label: item.service_name
@@ -83,13 +83,11 @@ const DoctorScheduleManage = () => {
       tableHeaders={tableHeaders}
       renderTableRow={renderScheduleTableRow}
       PopupFormComponent={DoctorScheduleForm}
-      // Pass serviceId as a query parameter for filtering
       fetchItemsApi={`/api/schedules${filterServiceId ? `?serviceId=${filterServiceId}` : ''}`}
       deleteItemApi="/api/schedules"
       itemIdentifierKey="ds_id"
       popupTitlePrefix="ตารางออกตรวจ"
     >
-      {/* Filter Dropdown (passed as children to ManagePageTemplate) */}
       <div className="mb-4 w-full md:w-1/3">
         <FormGroup
           as="select"

@@ -29,7 +29,7 @@ exports.getAvailableSlotsByDateAndService = async (req, res) => {
 exports.bookNewAppointment = async (req, res) => {
     const { ers_id, symptoms, appointment_type } = req.body;
     console.log('Booking new appointment with data:', req.body);
-    const patient_id = req.user.entity_id; // Assuming entity_id stores patient_id for patient role
+    const patient_id = req.user.entity_id;
 
     if (!ers_id || !patient_id || !symptoms || !appointment_type) {
         return res.status(400).json({ message: 'ข้อมูลการจองไม่สมบูรณ์' });
@@ -41,7 +41,7 @@ exports.bookNewAppointment = async (req, res) => {
         if (result.success) {
             res.status(201).json(result);
         } else {
-            res.status(409).json(result); // Conflict if slot is already booked or other issues
+            res.status(409).json(result);
         }
     } catch (error) {
         console.error('Error booking new appointment:', error);
@@ -104,7 +104,6 @@ exports.getAppointments = async (req, res) => {
     }
 
     try {
-        // Assume this endpoint is for staff (nurse, head_nurse) so no patient_id filter by default
         const appointments = await Appointment.getFilteredAppointments(filters);
         res.status(200).json(appointments);
     } catch (error) {

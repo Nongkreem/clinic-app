@@ -14,7 +14,14 @@ import Service from './pages/Service';
 import Login from './pages/Login';
 import Register from './pages/Register'; // เพิ่ม Register Page
 import DoctorDashboard from './pages/doctor/DoctorDashboard';
+
+// Specific Pages for Head Nurse
 import HeadNurseDashboard from './pages/head-nurse/HeadNurseDashboard';
+import ServiceManage from './pages/nurse/ServiceManage.jsx';
+import DoctorsManage from './pages/nurse/DoctorsManage.jsx';
+import GuideManage from './pages/nurse/GuideManage.jsx';
+import ClinicRoomManage from './pages/nurse/ClinicRoomManage.jsx';
+import DoctorScheduleManage from './pages/nurse/DoctorScheduleManage.jsx';
 
 // Specific Pages for Patient
 import PatientDashboard from './pages/patient/PatientDashboard';
@@ -23,12 +30,8 @@ import MyAppointment from './pages/patient/MyAppointment.jsx';
 
 // Specific Pages for Nures
 import NurseDashboard from './pages/nurse/NurseDashboard';
-import ServiceManage from './pages/nurse/ServiceManage.jsx';
-import DoctorsManage from './pages/nurse/DoctorsManage.jsx';
-import GuideManage from './pages/nurse/GuideManage.jsx';
-import ClinicRoomManage from './pages/nurse/ClinicRoomManage.jsx';
-import DoctorScheduleManage from './pages/nurse/DoctorScheduleManage.jsx';
 import AppointmentReqManage from './pages/nurse/AppointmentReqManage.jsx';
+import AppointmentManage from './pages/nurse/AppointmentManage.jsx';
 // Components
 import Button from './components/common/Button';
 
@@ -102,16 +105,19 @@ function App() {
 
           <Route path="nurse-dashboard" element={<Navigate to = "/nurse-dashboard/services" replace/>} />
           <Route path="nurse-dashboard/*" element={<NurseDashboard/>}>
-            <Route path="services" element={<ServiceManage/>}/>
+            <Route path="appointment-req" element={<AppointmentReqManage/>}/>
+            <Route path="appointment" element={<AppointmentManage/>}/>
+            <Route path="*" element={<Navigate to="services" replace />} /> {/* Fallback สำหรับ /nurse-dashboard/unknown-path */}
+          </Route>
+          
+          <Route path="head_nurse-dashboard" element={<Navigate to = "head_nurse-dashboard/services" replace/>} />
+          <Route path='head_nurse-dashboard/*' element={<HeadNurseDashboard/>}>
+          <Route path="services" element={<ServiceManage/>}/>
             <Route path="doctors" element={<DoctorsManage/>}/>
             <Route path="guide" element={<GuideManage/>}/>
             <Route path="examination-room" element={<ClinicRoomManage/>}/>
             <Route path="schedules" element={<DoctorScheduleManage/>}/>
-            <Route path="appointment-req" element={<AppointmentReqManage/>}/>
-            <Route path="*" element={<Navigate to="services" replace />} /> {/* Fallback สำหรับ /nurse-dashboard/unknown-path */}
           </Route>
-          
-          <Route path="headnurse-dashboard" element={<HeadNurseDashboard />} />
         </Route>
 
 
