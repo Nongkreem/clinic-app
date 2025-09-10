@@ -17,12 +17,12 @@ const ManagePageTemplate = ({
   itemIdentifierKey,
   popupTitlePrefix
 }) => {
-  const [items, setItems] = useState([]); // รายการข้อมูลทั้งหมด
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
 
-  const [isPopupOpen, setIsPopupOpen] = useState(false); // สถานะ Modal
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null); // เก็บข้อมูลที่กำลังแก้ไข
 
   // ฟังก์ชันสำหรับดึงข้อมูลทั้งหมด
@@ -142,12 +142,11 @@ const ManagePageTemplate = ({
                   <th key={index} className="py-3 px-4 text-left text-xs font-semibold text-black uppercase tracking-wider">
                     {header.label}
                   </th>
-                ))}
+                ))} 
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {items.map((item, index) => (
-                // renderTableRow จะรับ item, handleEditItem, handleDeleteItem ไปสร้างแต่ละแถว
                 <React.Fragment key={item[itemIdentifierKey]}>
                   {renderTableRow(item, index ,handleEditItem, handleDeleteItem)}
                 </React.Fragment>

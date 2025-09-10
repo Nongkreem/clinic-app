@@ -1,20 +1,3 @@
-/**
- * Component สำหรับกลุ่ม Form Input (Label + Input, Textarea, Select)
- * @param {Object} props - Props สำหรับ Component
- * @param {string} props.label - ข้อความ Label
- * @param {string} [props.as='input'] - ชนิดของ Element ที่จะ Render ('input', 'textarea', 'select')
- * @param {string} [props.type='text'] - ชนิดของ input (สำหรับ as='input' เท่านั้น: text, email, password, number ฯลฯ)
- * @param {string} props.id - ID สำหรับ input และ htmlFor ของ label
- * @param {string} props.name - ชื่อสำหรับ input
- * @param {string|number} props.value - ค่าปัจจุบันของ input
- * @param {function} props.onChange - Handler เมื่อค่า input เปลี่ยน
- * @param {boolean} [props.required=false] - กำหนดว่า input นี้จำเป็นต้องกรอกหรือไม่
- * @param {string} [props.placeholder] - Placeholder text
- * @param {string} [props.className] - Custom CSS class เพิ่มเติม
- * @param {Array<Object>} [props.options=[]] - Array ของ { value: string|number, label: string } สำหรับ as='select'
- * @param {number} [props.rows=3] - จำนวนแถวสำหรับ as='textarea'
- * @param {boolean} [props.readOnly=false] - กำหนดว่า input เป็นแบบอ่านอย่างเดียวหรือไม่
- */
 const FormGroup = ({
   label,
   as = 'input', // 'input', 'textarea', 'select'

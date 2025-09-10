@@ -1,6 +1,4 @@
 // components/icons/HeartIcon.jsx
-import React from 'react';
-
 const HomeIcon = (props) => {
   return (
     <svg 

@@ -7,7 +7,6 @@ import { Plus } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
 
-// Array of days of the week for dropdown options
 const dayOfWeekOptions = [
   { value: '', label: 'เลือกวันในสัปดาห์' },
   { value: '1', label: 'จันทร์' }, // Monday is day 1
@@ -19,13 +18,11 @@ const dayOfWeekOptions = [
   { value: '0', label: 'อาทิตย์' } // Sunday is day 0
 ];
 
-/**
- * Helper function to generate all dates for a specific day of the week
- * within a given date range, based on local timezone.
- */
+
 const generateDatesForScheduleClient = (dayOfWeekIndex, startDateStr, endDateStr) => {
   const dates = [];
   const [startYear, startMonth, startDay] = startDateStr.split('-').map(Number);
+  // เด
   let currentDate = new Date(startYear, startMonth - 1, startDay); 
 
   const [endYear, endMonth, endDay] = endDateStr.split('-').map(Number);
@@ -48,23 +45,13 @@ const generateDatesForScheduleClient = (dayOfWeekIndex, startDateStr, endDateStr
   return dates;
 };
 
-/**
- * Helper function to parse HH:MM time string to total minutes from midnight
- */
 const parseTime = (timeStr) => {
   if (!timeStr) return -1; // Handle empty/invalid time
   const [hours, minutes] = timeStr.split(':').map(Number);
   return hours * 60 + minutes;
 };
 
-/**
- * Helper function to check if two time ranges overlap
- * @param {string} start1 - HH:MM string for first range start
- * @param {string} end1 - HH:MM string for first range end
- * @param {string} start2 - HH:MM string for second range start
- * @param {string} end2 - HH:MM string for second range end
- * @returns {boolean} True if ranges overlap, false otherwise
- */
+
 const timesOverlap = (start1, end1, start2, end2) => {
     const s1 = parseTime(start1);
     const e1 = parseTime(end1);
@@ -81,13 +68,6 @@ const timesOverlap = (start1, end1, start2, end2) => {
 };
 
 
-/**
- * Component สำหรับ Form เพิ่ม/แก้ไขตารางออกตรวจของแพทย์
- * @param {Object} props - Props สำหรับ Component
- * @param {Object|null} props.initialData - ข้อมูลตารางออกตรวจเริ่มต้นสำหรับแก้ไข (null ถ้าเป็นการเพิ่มใหม่)
- * @param {function} props.onSaveSuccess - ฟังก์ชันที่จะถูกเรียกเมื่อบันทึกสำเร็จ
- * @param {function} props.onCancel - ฟังก์ชันที่จะถูกเรียกเมื่อยกเลิกการแก้ไข/เพิ่ม
- */
 const DoctorScheduleForm = ({ initialData, onSaveSuccess, onCancel }) => {
   const [selectedDayOfWeek, setSelectedDayOfWeek] = useState('');
   const [startDate, setStartDate] = useState('');
