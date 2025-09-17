@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import DoctorScheduleForm from '../../components/nurse/DoctorScheduleForm';
+import DoctorScheduleForm from '../../components/head-nurse/DoctorScheduleForm';
 import FormGroup from '../../components/common/FormGroup';
 import Button from '../../components/common/Button';
 import Popup from '../../components/common/Popup';

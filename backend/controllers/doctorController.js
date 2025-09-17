@@ -1,10 +1,6 @@
 const Doctor = require('../models/Doctor');
 
-/**
- * สร้างแพทย์ใหม่
- * @param {Object} req - Request object
- * @param {Object} res - Response object
- */
+
 exports.createDoctor = async (req, res) => {
     console.log('Received req body: ', req.body)
   const { doctor_id, full_name, phone_number, email, service_ids } = req.body;
@@ -27,11 +23,7 @@ exports.createDoctor = async (req, res) => {
   }
 };
 
-/**
- * ดึงข้อมูลแพทย์ทั้งหมด
- * @param {Object} req - Request object
- * @param {Object} res - Response object
- */
+
 exports.getAllDoctors = async (req, res) => {
   try {
     const doctors = await Doctor.getAllDoctors();

@@ -1,6 +1,6 @@
 import React from 'react';
 import ManagePageTemplate from '../../components/common/ManagePageTemplate';
-import ServiceForm from '../../components/nurse/ServiceForm'; // นำเข้า ServiceForm
+import ServiceForm from '../../components/head-nurse/ServiceForm'; // นำเข้า ServiceForm
 
 const ServiceManage = () => {
 

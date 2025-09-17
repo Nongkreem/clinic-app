@@ -1,6 +1,6 @@
 import React from 'react';
 import ManagePageTemplate from '../../components/common/ManagePageTemplate';
-import DoctorForm from '../../components/nurse/DoctorForm'; // นำเข้า DoctorForm
+import DoctorForm from '../../components/head-nurse/DoctorForm'; // นำเข้า DoctorForm
 
 const DoctorsManage = () => {
 

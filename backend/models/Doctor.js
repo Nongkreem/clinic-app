@@ -1,15 +1,5 @@
 const db = require('../config/db');
 
-/**
- * สร้างแพทย์ใหม่และบันทึกบริการที่เกี่ยวข้อง
- * @param {Object} doctorData - ข้อมูลแพทย์
- * @param {string} doctorData.doctor_id - รหัสประจำตัวแพทย์
- * @param {string} doctorData.full_name - ชื่อเต็ม
- * @param {string} [doctorData.phone_number] - เบอร์โทรศัพท์ (optional)
- * @param {string} [doctorData.email] - อีเมล (optional)
- * @param {Array<number>} doctorData.service_ids - Array ของ service_id ที่เกี่ยวข้อง
- * @returns {Promise<Object>} - ข้อมูลแพทย์ที่สร้างสำเร็จ
- */
 exports.createDoctor = async ({ doctor_id, full_name, phone_number, email, service_ids }) => {
   const connection = await db.getConnection();
   try {
@@ -41,10 +31,7 @@ exports.createDoctor = async ({ doctor_id, full_name, phone_number, email, servi
   }
 };
 
-/**
- * ดึงข้อมูลแพทย์ทั้งหมด พร้อมบริการที่เกี่ยวข้อง
- * @returns {Promise<Array<Object>>} - Array ของ Object แพทย์
- */
+
 exports.getAllDoctors = async () => {
   try {
     // ดึงแพทย์ทั้งหมด

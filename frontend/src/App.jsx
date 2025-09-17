@@ -22,6 +22,7 @@ import DoctorsManage from './pages/head-nurse/DoctorsManage.jsx';
 import GuideManage from './pages/head-nurse/GuideManage.jsx';
 import ClinicRoomManage from './pages/head-nurse/ClinicRoomManage.jsx';
 import DoctorScheduleManage from './pages/head-nurse/DoctorScheduleManage.jsx';
+import NurseManage from './pages/head-nurse/NurseManage.jsx';
 
 // Specific Pages for Patient
 import PatientDashboard from './pages/patient/PatientDashboard';
@@ -117,6 +118,7 @@ function App() {
             <Route path="guide" element={<GuideManage/>}/>
             <Route path="examination-room" element={<ClinicRoomManage/>}/>
             <Route path="schedules" element={<DoctorScheduleManage/>}/>
+            <Route path="nurses" element={<NurseManage/>}/>
           </Route>
         </Route>
 

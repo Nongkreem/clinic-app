@@ -62,9 +62,28 @@ exports.login = async (req, res) => {
     const user = await User.findByUserEmail(email);
     if (!user) return res.status(401).json({ message: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' });
 
+    let isMatch = false;
+
     // เปรียบเทียบรหัสผ่าน (user.password คือคอลัมน์ password ใน User_account)
-    const isMatch = await bcrypt.compare(password, user.password_hash);
-    if (!isMatch) return res.status(401).json({ message: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' });
+    if (user.password_hash === null) {
+      // นำรหัสผ่านที่ผู้ใช้กรอกมาในครั้งแรกไปบันทึกเป็นรหัสผ่านถาวรทันที
+      const hashedPassword = await bcrypt.hash(password, 10);
+      
+      // บันทึกรหัสผ่านถาวรลงในฐานข้อมูล
+      await db.execute(
+        'UPDATE user_accounts SET password_hash = ? WHERE id = ?',
+        [hashedPassword, user.id]
+      );
+      
+      isMatch = true; // ตั้งค่าให้การเข้าสู่ระบบครั้งนี้สำเร็จ
+    } else {
+      // กรณีที่สอง: มีรหัสผ่านอยู่แล้ว ให้ตรวจสอบด้วย bcrypt ตามปกติ
+      isMatch = await bcrypt.compare(password, user.password_hash);
+    }
+    
+    if (!isMatch) {
+      return res.status(401).json({ message: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' });
+    }
 
     // สร้าง JWT token
     const token = jwt.sign({ id: user.id, role: user.role, email: user.user_name, entity_id: user.entity_id }, process.env.JWT_SECRET, { expiresIn: '1d' });
@@ -74,7 +93,7 @@ exports.login = async (req, res) => {
       token,
       user: {
         id: user.id,
-        email: user.user_name, // ส่ง user_name กลับไปเป็น email ใน Frontend
+        email: user.user_name,
         role: user.role,
         entity_id: user.entity_id
       }

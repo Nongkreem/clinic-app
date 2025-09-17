@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import GuideForm from '../../components/nurse/GuideForm';
+import GuideForm from '../../components/head-nurse/GuideForm';
 import ManagePageTemplate from '../../components/common/ManagePageTemplate'
 const GuideManage = () => {
 

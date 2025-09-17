@@ -33,8 +33,8 @@ const ManagePageTemplate = ({
       const response = await axios.get(`${API_BASE_URL}${fetchItemsApi}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
-      console.log('Fetched items data in ManagePageTemplate: ', response)
       setItems(response.data);
+      console.log('Fetched items data in ManagePageTemplate: ', response.data)
     } catch (err) {
       console.error(`Failed to fetch ${popupTitlePrefix} items:`, err);
       if (err.response && (err.response.status === 401 || err.response.status === 403)) {

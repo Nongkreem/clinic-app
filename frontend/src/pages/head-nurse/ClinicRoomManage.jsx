@@ -1,5 +1,5 @@
 import ManagePageTemplate from '../../components/common/ManagePageTemplate';
-import ClinicRoomForm from '../../components/nurse/ClinicRoomForm';
+import ClinicRoomForm from '../../components/head-nurse/ClinicRoomForm';
 
 const ClinicRoomManage = () => {
   const tableHeaders = [

@@ -46,7 +46,7 @@ exports.register = async (email, password, role, hn, firstName, lastName, dateOf
                 'INSERT INTO patient (hn, first_name, last_name, date_of_birth, phone_number, gender) VALUES (?, ?, ?, ?, ?, ?)',
                 [hn, firstName, lastName, dateOfBirth, phoneNumber, gender]
             );
-            entityId = patientResult.insertId; // Get the newly generated patient_id
+            entityId = patientResult.insertId;
             console.log(`[User Model] New patient created with patient_id: ${entityId}`);
         }
         
@@ -57,15 +57,46 @@ exports.register = async (email, password, role, hn, firstName, lastName, dateOf
         console.log(`[User Model] New user account created for email: ${email}`);
 
 
-        await connection.commit(); // Commit the transaction if all inserts are successful
+        await connection.commit();
         return { success: true, message: 'ลงทะเบียนสำเร็จ' };
 
     } catch (error) {
-        await connection.rollback(); // Rollback on any error during the transaction
+        await connection.rollback(); 
         console.error('Error during user registration transaction:', error);
-        // Throw the error so the controller can catch it and send appropriate response
         throw error;
     } finally {
-        connection.release(); // Always release the connection
+        connection.release();
+    }
+};
+
+exports.createStaffAccount = async (email, role, entityId) => {
+    const connection = await db.getConnection();
+    try {
+        await connection.beginTransaction();
+
+        // ตรวจสอบว่าอีเมลนี้ถูกใช้งานแล้วหรือยัง
+        const [existingUsers] = await connection.execute(
+            'SELECT email FROM user_accounts WHERE email = ?',
+            [email]
+        );
+        if (existingUsers.length > 0) {
+            await connection.rollback();
+            return { success: false, message: 'อีเมลนี้ถูกใช้ลงทะเบียนแล้ว' };
+        }
+
+        // password_hash จะเป็น NULL หากยังไม่เคยเข้าสู่ระบบ
+        const [userAccountResult] = await connection.execute(
+            'INSERT INTO user_accounts (email, password_hash, role, entity_id) VALUES (?, ?, ?, ?)',
+            [email, null, role, entityId]
+        );
+
+        await connection.commit();
+        return { success: true, message: 'สร้างบัญชีบุคลากรสำเร็จ' };
+    } catch (error) {
+        await connection.rollback();
+        console.error('Error during staff account creation transaction:', error);
+        throw error;
+    } finally {
+        connection.release();
     }
 };
