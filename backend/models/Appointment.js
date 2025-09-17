@@ -222,7 +222,7 @@ exports.updateAppointmentStatus = async (appointmentId, newStatus, confirmCheckI
         let query = `UPDATE appointment SET status = ?`;
         const params = [newStatus];
 
-        if (newStatus === 'completed' && confirmCheckInTime) {
+        if (newStatus === 'confirmed' && confirmCheckInTime) {
             query += `, confirmCheckInTime = ?`;
             params.push(confirmCheckInTime);
         }
@@ -348,7 +348,7 @@ exports.completeAppointment = async (appointmentId, patientId) => {
 
         const now = new Date();
         const [result] = await connection.execute(
-            `UPDATE appointment SET status = 'completed', confirmCheckInTime = ? WHERE appointment_id = ?`,
+            `UPDATE appointment SET status = 'confirmed', confirmCheckInTime = ? WHERE appointment_id = ?`,
             [now, appointmentId]
         );
 

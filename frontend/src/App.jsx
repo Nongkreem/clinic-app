@@ -17,11 +17,11 @@ import DoctorDashboard from './pages/doctor/DoctorDashboard';
 
 // Specific Pages for Head Nurse
 import HeadNurseDashboard from './pages/head-nurse/HeadNurseDashboard';
-import ServiceManage from './pages/nurse/ServiceManage.jsx';
-import DoctorsManage from './pages/nurse/DoctorsManage.jsx';
-import GuideManage from './pages/nurse/GuideManage.jsx';
-import ClinicRoomManage from './pages/nurse/ClinicRoomManage.jsx';
-import DoctorScheduleManage from './pages/nurse/DoctorScheduleManage.jsx';
+import ServiceManage from './pages/head-nurse/ServiceManage.jsx';
+import DoctorsManage from './pages/head-nurse/DoctorsManage.jsx';
+import GuideManage from './pages/head-nurse/GuideManage.jsx';
+import ClinicRoomManage from './pages/head-nurse/ClinicRoomManage.jsx';
+import DoctorScheduleManage from './pages/head-nurse/DoctorScheduleManage.jsx';
 
 // Specific Pages for Patient
 import PatientDashboard from './pages/patient/PatientDashboard';
@@ -107,7 +107,7 @@ function App() {
           <Route path="nurse-dashboard/*" element={<NurseDashboard/>}>
             <Route path="appointment-req" element={<AppointmentReqManage/>}/>
             <Route path="appointment" element={<AppointmentManage/>}/>
-            <Route path="*" element={<Navigate to="services" replace />} /> {/* Fallback สำหรับ /nurse-dashboard/unknown-path */}
+            {/* <Route path="*" element={<Navigate to="services" replace />} /> Fallback สำหรับ /nurse-dashboard/unknown-path */}
           </Route>
           
           <Route path="head_nurse-dashboard" element={<Navigate to = "head_nurse-dashboard/services" replace/>} />

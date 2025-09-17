@@ -163,7 +163,7 @@ exports.cancelPatientAppointment = async (req, res) => {
 exports.completePatientAppointment = async (req, res) => {
     const { id } = req.params; 
     const patient_id = req.user.entity_id; 
-
+    console.log('[DEBUG AppointmentController] Patient ID: ' , patient_id);
     if (!patient_id) {
         return res.status(401).json({ message: 'ไม่ได้รับอนุญาต: ไม่พบข้อมูลผู้ป่วย' });
     }

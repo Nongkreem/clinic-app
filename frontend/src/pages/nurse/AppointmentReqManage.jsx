@@ -181,7 +181,7 @@ const AppointmentReqManage = () => {
       case 'pending': return <span className="px-2 py-1 text-xs font-semibold rounded-full text-yellow-600">รออนุมัติ</span>;
       case 'approved': return <span className="px-2 py-1 text-xs font-semibold rounded-full text-green-800">อนุมัติแล้ว</span>;
       case 'rejected': return <span className="px-2 py-1 text-xs font-semibold rounded-full text-red-800">ถูกปฏิเสธ</span>;
-      case 'completed': return <span className="px-2 py-1 text-xs font-semibold rounded-full text-blue-800">เสร็จสิ้น</span>;
+      case 'confirmed': return <span className="px-2 py-1 text-xs font-semibold rounded-full text-blue-800">ยืนยันเข้ารับการรักษา</span>;
       case 'cancelled': return <span className="px-2 py-1 text-xs font-semibold rounded-full text-gray-800">ยกเลิกแล้ว</span>;
       default: return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">{status}</span>;
     }
@@ -240,7 +240,7 @@ const AppointmentReqManage = () => {
             <option value="pending">รอดำเนินการ</option>
             <option value="approved">อนุมัติแล้ว</option>
             <option value="rejected">ถูกปฏิเสธ</option>
-            <option value="completed">เสร็จสิ้น</option>
+            <option value="confirmed">เสร็จสิ้น</option>
             <option value="cancelled">ยกเลิกแล้ว</option>
             <option value="">-- แสดงทั้งหมด --</option>
           </select>
@@ -254,7 +254,7 @@ const AppointmentReqManage = () => {
           {selectedFilterService
             ? `สำหรับ: ${selectedFilterService.service_name}`
             : ""}{" "}
-          {filterStatus !== '' ? ` (สถานะ: ${filterStatus === 'pending' ? 'รอดำเนินการ' : filterStatus === 'approved' ? 'อนุมัติแล้ว' : filterStatus === 'rejected' ? 'ถูกปฏิเสธ' : filterStatus === 'completed' ? 'เสร็จสิ้น' : filterStatus === 'cancelled' ? 'ยกเลิกแล้ว' : filterStatus})` : ''}
+          {filterStatus !== '' ? ` (สถานะ: ${filterStatus === 'pending' ? 'รอดำเนินการ' : filterStatus === 'approved' ? 'อนุมัติแล้ว' : filterStatus === 'rejected' ? 'ถูกปฏิเสธ' : filterStatus === 'confirmed' ? 'เสร็จสิ้น' : filterStatus === 'cancelled' ? 'ยกเลิกแล้ว' : filterStatus})` : ''}
         </h3>
         {loading && (
           <p className="text-center text-gray-500">กำลังโหลดคำขอนัดหมาย...</p>

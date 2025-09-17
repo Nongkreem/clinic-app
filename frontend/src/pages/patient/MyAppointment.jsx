@@ -96,7 +96,7 @@ const MyAppointment = () => {
 
     const handleCompleteClick = (appointmentId) => {
         setSelectedAppointmentId(appointmentId);
-        setActionType('complete');
+        setActionType('confirmed');
         setConfirmMessage('คุณแน่ใจหรือไม่ว่าได้เข้ารับบริการนี้แล้ว?');
         setShowConfirmPopup(true);
     };
@@ -112,7 +112,7 @@ const MyAppointment = () => {
                 response = await axios.put(`${API_BASE_URL}/api/appointments/${selectedAppointmentId}/patient-cancel`, {}, {
                     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
                 });
-            } else if (actionType === 'complete') {
+            } else if (actionType === 'confirmed') {
                 response = await axios.put(`${API_BASE_URL}/api/appointments/${selectedAppointmentId}/patient-complete`, {}, {
                     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
                 });
@@ -171,7 +171,7 @@ const MyAppointment = () => {
             case 'pending': return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">รออนุมัติ</span>;
             case 'approved': return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">อนุมัติแล้ว</span>;
             case 'rejected': return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">ถูกปฏิเสธ</span>;
-            case 'completed': return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">เข้ารับบริการ</span>;
+            case 'confirmed': return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">เข้ารับบริการ</span>;
             case 'cancelled': return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">ยกเลิกแล้ว</span>;
             default: return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">{status}</span>;
         }
@@ -254,7 +254,7 @@ const MyAppointment = () => {
                                         </Button>
                                     </>
                                 )}
-                                {app.status === 'completed' && (
+                                {app.status === 'confirmed' && (
                                     <Button 
                                         variant="primary" 
                                         onClick={() => handleViewAppointmentCard(app)}
