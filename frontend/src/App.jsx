@@ -35,6 +35,7 @@ import AppointmentReqManage from './pages/nurse/AppointmentReqManage.jsx';
 import AppointmentManage from './pages/nurse/AppointmentManage.jsx';
 // Components
 import Button from './components/common/Button';
+import NuresScheduleManage from './pages/head-nurse/NuresScheduleManage.jsx';
 
 
 // omponent สำหรับ Protected Route
@@ -119,6 +120,7 @@ function App() {
             <Route path="examination-room" element={<ClinicRoomManage/>}/>
             <Route path="schedules" element={<DoctorScheduleManage/>}/>
             <Route path="nurses" element={<NurseManage/>}/>
+            <Route path="nurses-schedules" element={<NuresScheduleManage/>}/>
           </Route>
         </Route>
 

@@ -22,8 +22,9 @@ const menuByRole = {
     { label: "ข้อมูลบริการ", path: "head_nurse-dashboard/services" },
     { label: "ข้อมูลห้องตรวจ", path: "/head_nurse-dashboard/examination-room" },
     { label: "ข้อมูลแพทย์", path: "/head_nurse-dashboard/doctors" },
-    { label: "ข้อมูลตารางออกตรวจ", path: "/head_nurse-dashboard/schedules" },
-    { label: "ข้อมูลพยาบาล", path: "/head_nurse-dashboard/nurses"}
+    { label: "ข้อมูลตารางออกตรวจแพทย์", path: "/head_nurse-dashboard/schedules" },
+    { label: "ข้อมูลพยาบาล", path: "/head_nurse-dashboard/nurses"},
+    { label: "ข้อมูลตารางเวรพยาบาล", path: "/head_nurse-dashboard/nurses-schedules"}
   ],
 };
 
