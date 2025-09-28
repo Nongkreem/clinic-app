@@ -42,11 +42,11 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await axios.post(`${API_BASE_URL}/api/auth/login`, { email, password });
       const { token, user: userData } = response.data; // user: userData เพื่อไม่ให้ชื่อซ้ำกับ state user
-      
       localStorage.setItem('token', token);
-            
+      
       setToken(token);
       setUser({ email: userData.email, role: userData.role, id: userData.id, entity_id: userData.entity_id }); // ตั้งค่า user state
+      console.log('[AuthContext] User data: ',userData.role);
       
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 

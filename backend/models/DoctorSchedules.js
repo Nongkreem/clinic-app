@@ -17,14 +17,7 @@ const generateTimeSlots = (startTime, endTime) => {
   return slots;
 };
 
-/**
- * Helper function to generate all dates for a specific day of the week
- * within a given date range, based on local timezone.
- * @param {number} dayOfWeekIndex - Day of week (0 for Sunday, 1 for Monday, ..., 6 for Saturday)
- * @param {string} startDateStr - Start date string (YYYY-MM-DD)
- * @param {string} endDateStr - End date string (YYYY-MM-DD)
- * @returns {Array<string>} Array of date strings (YYYY-MM-DD)
- */
+
 const generateDatesForSchedule = (dayOfWeekIndex, startDateStr, endDateStr) => {
   console.log(
     `[Backend Helper] generateDatesForSchedule: Target dayOfWeekIndex = ${dayOfWeekIndex}, StartDate = ${startDateStr}, EndDate = ${endDateStr}`
@@ -64,15 +57,7 @@ const generateDatesForSchedule = (dayOfWeekIndex, startDateStr, endDateStr) => {
   return dates;
 };
 
-/**
- * Checks for overlapping schedules for a given doctor on a specific date and time range.
- * @param {string} doctorId - The ID of the doctor
- * @param {string} scheduleDate - The date (YYYY-MM-DD)
- * @param {string} timeStart - The start time (HH:MM:SS)
- * @param {string} timeEnd - The end time (HH:MM:SS)
- * @param {number|null} [excludeDsId=null] - Optional: ds_id to exclude from the check (for update operations)
- * @returns {Promise<boolean>} True if an overlap is found, false otherwise.
- */
+
 exports.checkOverlapSchedules = async (doctorId, scheduleDate, timeStart, timeEnd, excludeDsId = null) => {
     try {
         let query = `
@@ -104,13 +89,7 @@ exports.checkOverlapSchedules = async (doctorId, scheduleDate, timeStart, timeEn
 
 /* ------------------------ CRUD ------------------------ */
 
-/**
- * Creates new doctor schedules based on recurring pattern.
- * This function now expects a single object containing recurring schedule data.
- * It will skip schedules that overlap with existing ones for the same doctor.
- * @param {object} recurringScheduleData - Object: { selectedDayOfWeek, startDate, endDate, scheduleEntries: Array<{ service_id, doctor_id, room_id, time_start, time_end }> }
- * @returns {Promise<{createdSchedules: Array<Object>, skippedSchedules: Array<Object>}>} Object with created and skipped schedules
- */
+
 exports.createSchedules = async (recurringScheduleData) => {
   const connection = await db.getConnection();
   try {
@@ -207,10 +186,10 @@ exports.getAllSchedules = async (filters = {}) => {
                 d.full_name AS doctor_full_name,
                 er.room_id,
                 er.room_name
-            FROM doctorSchedules ds  -- ✅ ใช้ชื่อตารางตามที่คุณยืนยัน
+            FROM doctorSchedules ds 
             JOIN services s ON ds.service_id = s.service_id
             JOIN doctors d ON ds.doctor_id = d.doctor_id
-            JOIN examRoom er ON ds.room_id = er.room_id -- ✅ ใช้ชื่อตารางตามที่คุณยืนยัน
+            JOIN examRoom er ON ds.room_id = er.room_id
         `;
     const params = [];
     const conditions = [];
@@ -238,13 +217,6 @@ exports.getAllSchedules = async (filters = {}) => {
   }
 };
 
-/**
- * Updates an existing doctor schedule.
- * Deletes existing slots and generates new ones based on updated time range.
- * @param {number} ds_id - The ID of the schedule to update
- * @param {Object} scheduleData - Data to update: { service_id, doctor_id, room_id, schedule_date, time_start, time_end }
- * @returns {boolean} True if updated, false otherwise.
- */
 exports.updateSchedule = async (
   ds_id,
   { service_id, doctor_id, room_id, schedule_date, time_start, time_end }
@@ -313,18 +285,13 @@ exports.updateSchedule = async (
   }
 };
 
-/**
- * Deletes a doctor schedule and its associated time slots.
- * @param {number} ds_id - The ID of the schedule to delete
- * @returns {boolean} True if deleted, false otherwise.
- */
 exports.deleteSchedule = async (ds_id) => {
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
 
     const [result] = await connection.execute(
-      "DELETE FROM doctorSchedules WHERE ds_id = ?", // ✅ ใช้ชื่อตารางตามที่คุณยืนยัน
+      "DELETE FROM doctorSchedules WHERE ds_id = ?",
       [ds_id]
     );
 

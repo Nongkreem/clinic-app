@@ -22,7 +22,7 @@ const dayOfWeekOptions = [
 const generateDatesForScheduleClient = (dayOfWeekIndex, startDateStr, endDateStr) => {
   const dates = [];
   const [startYear, startMonth, startDay] = startDateStr.split('-').map(Number);
-  // เด
+
   let currentDate = new Date(startYear, startMonth - 1, startDay); 
 
   const [endYear, endMonth, endDay] = endDateStr.split('-').map(Number);
@@ -279,12 +279,10 @@ const DoctorScheduleForm = ({ initialData, onSaveSuccess, onCancel }) => {
                   }))
                   .filter(s => s.roomId && s.timeStart && s.timeEnd); // Only include valid selections
 
-                // ✅ Filter out rooms that are occupied by other rows in this form *for overlapping times*
                 const filteredRooms = availableRoomsFromBackend.filter(backendRoom => {
                   const isOccupiedByAnotherFormRow = roomsOccupiedInFormWithTimes.some(occupied => {
                     return (
                       occupied.roomId === backendRoom.room_id.toString() &&
-                      // ✅ แก้ไขตรงนี้: ใช้ currentTimeStart และ currentTimeEnd ที่ถูกต้อง
                       timesOverlap(occupied.timeStart, occupied.timeEnd, currentTimeStart, currentTimeEnd) 
                     );
                   });
@@ -296,7 +294,6 @@ const DoctorScheduleForm = ({ initialData, onSaveSuccess, onCancel }) => {
                   [tempIdToUpdate]: filteredRooms
                 }));
 
-                // ✅ If the previously selected room is no longer in the filtered list, clear it
                 if (updatedSchedule.roomId && 
                     !filteredRooms.some(room => room.value === updatedSchedule.roomId)) {
                   updatedSchedule.roomId = '';
@@ -307,12 +304,12 @@ const DoctorScheduleForm = ({ initialData, onSaveSuccess, onCancel }) => {
                 setFetchedRoomsByScheduleRow(prev => ({ ...prev, [tempIdToUpdate]: [] }));
                 updatedSchedule.roomId = '';
               });
-            } else { // No valid recurring date or initialData.schedule_date
+            } else {
               setFetchedRoomsByScheduleRow(prev => ({ ...prev, [tempIdToUpdate]: [] }));
               updatedSchedule.roomId = '';
             }
           }
-          else { // Not enough info to fetch rooms (e.g., missing service, time, or date range)
+          else {
             setFetchedRoomsByScheduleRow(prev => ({ ...prev, [tempIdToUpdate]: [] }));
             updatedSchedule.roomId = '';
           }
