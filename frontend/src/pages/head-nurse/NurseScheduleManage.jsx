@@ -86,8 +86,9 @@ const NurseScheduleManage = () => {
   };
 
   const handleToggleStatus = async (nurse_id, currentStatus) => {
+    console.log("[FRONTEND] status before send to backend:", currentStatus)
     try {
-      await axios.put(`${API_BASE_URL}/api/counter-terminal-schedules/toggle-status/${nurse_id}`,
+      await axios.put(`${API_BASE_URL}/api/nurse-schedules/toggle-status/${nurse_id}`,
         { status: !currentStatus },
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );
@@ -115,7 +116,7 @@ const NurseScheduleManage = () => {
 
   // ---- Render rows ----
   const renderNurseRow = (nurse) => (
-    <div key={nurse.ct_id} className="bg-gray-50 border rounded p-3 mb-2">
+    <div key={nurse.ct_id} className="border-b border-gray-50 rounded p-3 mb-2 hover:bg-gray-50">
       <div className="flex justify-between items-center">
         <div>
           <div className="font-medium text-sm text-gray-800">
@@ -136,10 +137,10 @@ const NurseScheduleManage = () => {
             ลบ
           </button>
           <button
-            onClick={() => handleToggleStatus(nurse.nurse_id, nurse.is_at_counter_terminal)}
-            className={`px-2 py-1 text-xs text-white rounded ${nurse.is_at_counter_terminal ? 'bg-green-500' : 'bg-red-500'}`}
+            onClick={() => handleToggleStatus(nurse.nurse_id, nurse.is_counter_terminal)}
+            className={`px-2 py-1 text-xs text-white rounded ${nurse.is_counter_terminal ? 'bg-green-500' : 'bg-red-500'}`}
           >
-            {nurse.is_at_counter_terminal ? 'เปิด' : 'ปิด'}
+            {nurse.is_counter_terminal ? 'เปิด' : 'ปิด'}
           </button>
         </div>
       </div>
@@ -147,7 +148,7 @@ const NurseScheduleManage = () => {
   );
 
   const renderGroupedRow = (group, index) => (
-    <tr key={group.date} className="hover:bg-gray-50 border-t border-gray-200">
+    <tr key={group.date} className="hover:bg-gray-100 border-t border-gray-200">
       <td className="py-4 px-4 whitespace-nowrap text-sm font-medium">{index + 1}</td>
       <td className="py-4 px-4 whitespace-nowrap text-sm font-medium">{group.date}</td>
       <td className="py-4 px-4 text-sm">

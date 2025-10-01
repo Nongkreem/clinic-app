@@ -4,7 +4,19 @@ const passwordHasher = require('../utils/passwordHasher'); // ต้องมี
 
 exports.findByUserEmail = async (email) => {
   try {
-    const [rows] = await db.execute('SELECT id, email, password_hash, role, entity_id FROM user_accounts WHERE email = ?', [email]);
+    const [rows] = await db.execute(
+        `SELECT 
+            ua.id,
+            ua.email, 
+            ua.password_hash,
+            ua.role,
+            ua.entity_id,
+            ua.is_counter_terminal,
+            n.service_id
+         FROM user_accounts ua
+         LEFT JOIN nurse n ON ua.entity_id = n.nurse_id
+         WHERE ua.email = ?`, [email]
+        );
     return rows[0] || null;
   } catch (error) {
     console.error('Error finding user by email:', error);
@@ -13,17 +25,16 @@ exports.findByUserEmail = async (email) => {
 };
 
 exports.register = async (email, password, role, hn, firstName, lastName, dateOfBirth, phoneNumber, gender) => {
-    const connection = await db.getConnection(); // Get a database connection
+    const connection = await db.getConnection(); 
     try {
-        await connection.beginTransaction(); // Start a transaction
+        await connection.beginTransaction(); // Start transaction
 
-        // 1. Check if user_name (email) already exists in User_account
         const [existingUsers] = await connection.execute(
             'SELECT email FROM user_accounts WHERE email = ?',
             [email]
         );
         if (existingUsers.length > 0) {
-            await connection.rollback(); // Rollback the transaction if username exists
+            await connection.rollback();
             return { success: false, message: 'อีเมลนี้ถูกใช้ลงทะเบียนแล้ว' };
         }
 

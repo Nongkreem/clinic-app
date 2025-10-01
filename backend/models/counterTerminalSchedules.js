@@ -11,10 +11,12 @@ exports.getAllSchedules = async () => {
                     n.first_name,
                     n.last_name,
                     s.service_id,
-                    s.service_name
+                    s.service_name,
+                    ua.is_counter_terminal
                 FROM counterTerminalSchedules ct
                 JOIN nurse n ON ct.nurse_id = n.nurse_id
                 JOIN services s ON n.service_id = s.service_id
+                JOIN user_accounts ua ON ua.entity_id = n.nurse_id
             `
         );
         return nurseSchedules;
@@ -52,7 +54,7 @@ exports.toggleCounterStatus = async (nurse_id, status) => {
         await connection.beginTransaction();
 
         const [result] = await connection.execute(
-            `UPDATE user_accounts SET is_at_counter_terminal = ? WHERE user_id = ? AND role = 'nurse'`,
+            `UPDATE user_accounts SET is_counter_terminal = ? WHERE entity_id = ? AND role = 'nurse'`,
             [status, nurse_id]
         );
 

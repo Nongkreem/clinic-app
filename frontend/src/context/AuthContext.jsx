@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }) => {
           return;
         }
         setToken(storedToken);
-        setUser({ email: decodedToken.email, role: decodedToken.role, id: decodedToken.id, entity_id: decodedToken.entity_id });
+        setUser({ email: decodedToken.email, role: decodedToken.role, id: decodedToken.id, entity_id: decodedToken.entity_id, is_counter_terminal: decodedToken.is_counter_terminal, service_id: decodedToken.service_id || localStorage.getItem('service_id') || null});
         axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
       } catch (e) {
         console.error("Failed to decode token or token is invalid", e);
@@ -45,8 +45,8 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('token', token);
       
       setToken(token);
-      setUser({ email: userData.email, role: userData.role, id: userData.id, entity_id: userData.entity_id }); // ตั้งค่า user state
-      console.log('[AuthContext] User data: ',userData.role);
+      setUser({ email: userData.email, role: userData.role, id: userData.id, entity_id: userData.entity_id, is_counter_terminal: userData.is_counter_terminal, service_id: userData.service_id || null }); // ตั้งค่า user state
+      console.log('[AuthContext] service_id: ',userData.service_id);
       
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
@@ -77,8 +77,7 @@ export const AuthProvider = ({ children }) => {
         phoneNumber,
         gender
       });
-      setLoading(false);
-      return response.data; // { success: true, message: '...' } or { success: false, message: '...' }
+      setLoading(false); 
     } catch (error) {
       setLoading(false);
       console.error('Registration failed:', error.response?.data || error.message);

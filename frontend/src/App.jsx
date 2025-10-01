@@ -32,7 +32,7 @@ import MyAppointment from './pages/patient/MyAppointment.jsx';
 // Specific Pages for Nures
 import NurseDashboard from './pages/nurse/NurseDashboard';
 import AppointmentReqManage from './pages/nurse/AppointmentReqManage.jsx';
-import AppointmentManage from './pages/nurse/AppointmentManage.jsx';
+import NursePrecheckManage from './pages/nurse/NursePrecheckManage.jsx';
 // Components
 import Button from './components/common/Button';
 import NurseScheduleManage from './pages/head-nurse/NurseScheduleManage.jsx';
@@ -108,7 +108,7 @@ function App() {
           <Route path="nurse-dashboard" element={<Navigate to = "/nurse-dashboard/services" replace/>} />
           <Route path="nurse-dashboard/*" element={<NurseDashboard/>}>
             <Route path="appointment-req" element={<AppointmentReqManage/>}/>
-            <Route path="appointment" element={<AppointmentManage/>}/>
+            <Route path="nurse-precheck" element={<NursePrecheckManage/>}/>
             {/* <Route path="*" element={<Navigate to="services" replace />} /> Fallback สำหรับ /nurse-dashboard/unknown-path */}
           </Route>
           

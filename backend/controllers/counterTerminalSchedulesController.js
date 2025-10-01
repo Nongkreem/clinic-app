@@ -31,6 +31,7 @@ exports.deleteSchedule = async (req, res) => {
 exports.toggleCounterStatus = async (req, res) => {
     const { id: nurse_id } = req.params;
     const { status } = req.body;
+    console.log("status toggle from frontend:", status)
     try {
         const updated = await Schedules.toggleCounterStatus(nurse_id, status);
         if (updated) {

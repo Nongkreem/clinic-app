@@ -197,3 +197,19 @@ exports.getPatientBlacklistStatus = async (req, res) => {
         res.status(500).json({ message: 'ไม่สามารถดึงสถานะ Blacklist ได้' });
     }
 };
+
+exports.getApprovedCheckedInForService = async (req, res) => {
+  try {
+    const { serviceId } = req.query;
+    if (!serviceId) return res.status(400).json({ message: 'ต้องระบุ serviceId' });
+
+    const parsedServiceId = parseInt(serviceId, 10);
+    if (isNaN(parsedServiceId)) return res.status(400).json({ message: 'serviceId ไม่ถูกต้อง' });
+
+    const rows = await Appointment.getApprovedCheckedInAppointments(parsedServiceId);
+    res.status(200).json(rows);
+  } catch (err) {
+    console.error('Error getApprovedCheckedInForService:', err);
+    res.status(500).json({ message: 'ไม่สามารถดึงรายการนัดหมายได้' });
+  }
+};
