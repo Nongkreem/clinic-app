@@ -19,7 +19,7 @@ const PrecheckForm = ({ initialData, onSaveSuccess, onCancel }) => {
       if (!appointmentId) return;
       try {
         const res = await axios.get(
-          `${API_BASE_URL}/precheck/latest/${appointmentId}`,
+          `${API_BASE_URL}/api/precheck/latest/${appointmentId}`,
           { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
         );
         if (res.data) {
@@ -41,7 +41,7 @@ const PrecheckForm = ({ initialData, onSaveSuccess, onCancel }) => {
     e.preventDefault();
     try {
       await axios.post(
-        `${API_BASE_URL}/precheck`,
+        `${API_BASE_URL}/api/precheck`,
         {
           appointment_id: appointmentId,
           blood_pressure: bloodPressure,

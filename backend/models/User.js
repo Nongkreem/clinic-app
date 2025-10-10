@@ -1,28 +1,92 @@
-const db = require('../config/db'); // ตรวจสอบให้แน่ใจว่า import db connection pool แล้ว
+const db = require('../config/db');
 const passwordHasher = require('../utils/passwordHasher'); // ต้องมี passwordHasher
 
 
 exports.findByUserEmail = async (email) => {
   try {
     const [rows] = await db.execute(
-        `SELECT 
-            ua.id,
-            ua.email, 
-            ua.password_hash,
-            ua.role,
-            ua.entity_id,
-            ua.is_counter_terminal,
-            n.service_id
-         FROM user_accounts ua
-         LEFT JOIN nurse n ON ua.entity_id = n.nurse_id
-         WHERE ua.email = ?`, [email]
+      `SELECT 
+          ua.id,
+          ua.email,
+          ua.password_hash,
+          ua.role,
+          ua.entity_id,
+          ua.is_counter_terminal,
+          n.service_id AS nurse_service_id
+       FROM user_accounts ua
+       LEFT JOIN nurse n ON ua.entity_id = n.nurse_id
+       WHERE ua.email = ?`,
+      [email]
+    );
+
+    if (rows.length > 0) {
+      const user = rows[0];
+
+      // ถ้าเป็นหมอ และ user มีอยู่แล้ว ก็ไปดึง service_id เพิ่ม
+      if (user.role === "doctor") {
+        const [services] = await db.execute(
+          `SELECT service_id FROM doctorService WHERE doctor_id = ?`,
+          [user.entity_id]
         );
-    return rows[0] || null;
+        user.service_ids = services.map(s => s.service_id);
+      }
+      return user;
+    }
+
+    // 2) ถ้าไม่เจอใน user_accounts → ลองไปดูในตาราง nurse
+    const [nurseRows] = await db.execute(
+      `SELECT nurse_id AS entity_id, service_id 
+       FROM nurse
+       WHERE gmail = ? LIMIT 1`,
+      [email]
+    );
+    if (nurseRows.length > 0) {
+      const nurse = nurseRows[0];
+      return {
+        id: null, // ยังไม่มีใน user_accounts
+        email,
+        password_hash: null,
+        role: "nurse",
+        entity_id: nurse.entity_id,
+        is_counter_terminal: 0,
+        nurse_service_id: nurse.service_id
+      };
+    }
+
+    // 3) ถ้าไม่เจอ → ลองไปดูในตาราง doctors
+    const [doctorRows] = await db.execute(
+      `SELECT doctor_id AS entity_id 
+       FROM doctors
+       WHERE email = ? LIMIT 1`,
+      [email]
+    );
+    if (doctorRows.length > 0) {
+      const doctor = doctorRows[0];
+      const [services] = await db.execute(
+        `SELECT service_id FROM doctorService WHERE doctor_id = ?`,
+        [doctor.entity_id]
+      );
+      return {
+        id: null, // ยังไม่มีใน user_accounts
+        email,
+        password_hash: null,
+        role: "doctor",
+        entity_id: doctor.entity_id,
+        is_counter_terminal: 0,
+        service_ids: services.map(s => s.service_id)
+      };
+    }
+
+    // 4) ถ้าไม่เจอเลย
+    return null;
+
   } catch (error) {
     console.error('Error finding user by email:', error);
     throw error;
   }
+
 };
+
 
 exports.register = async (email, password, role, hn, firstName, lastName, dateOfBirth, phoneNumber, gender) => {
     const connection = await db.getConnection(); 

@@ -94,32 +94,40 @@ exports.login = async (req, res) => {
   }
 
   try {
-    const user = await User.findByUserEmail(email);
-    if (!user)
-      return res.status(401).json({ message: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
-
-    let isMatch = false;
-
-    if (user.password_hash === null) {
-      // นำรหัสผ่านที่ผู้ใช้กรอกมาในครั้งแรกไปบันทึกเป็นรหัสผ่านถาวรทันที
-      const hashedPassword = await bcrypt.hash(password, 10);
-
-      // บันทึกรหัสผ่านถาวรลงในฐานข้อมูล
-      await db.execute(
-        "UPDATE user_accounts SET password_hash = ? WHERE id = ?",
-        [hashedPassword, user.id]
-      );
-
-      isMatch = true; // ตั้งค่าให้การเข้าสู่ระบบครั้งนี้สำเร็จ
-    } else {
-      // กรณีที่สอง: มีรหัสผ่านอยู่แล้ว ให้ตรวจสอบด้วย bcrypt ตามปกติ
-      isMatch = await bcrypt.compare(password, user.password_hash);
+    let user = await User.findByUserEmail(email);
+    if (!user) {
+      return res.status(401).json({ message: "ไม่พบข้อมูลผู้ใช้งานในระบบ" });
     }
 
+    // ตรวจสอบว่าเป็นบุคลากรหรือไม่
+    const isHospitalStaff = user.role === "doctor" || user.role === "nurse" || user.role === "head_nurse";
+
+    // ถ้าเป็นบุคลากร และยังไม่มี account ใน user_accounts
+    if (isHospitalStaff && !user.id) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const [insertRes] = await db.execute(
+        `INSERT INTO user_accounts (email, password_hash, role, entity_id, is_counter_terminal)
+         VALUES (?, ?, ?, ?, ?)`,
+        [email, hashedPassword, user.role, user.entity_id, 0]
+      );
+      user.id = insertRes.insertId;
+      user.password_hash = hashedPassword;
+    }
+
+    // ถ้าไม่ใช่บุคลากร และไม่มี account ให้ปฏิเสธการ login
+    if (!isHospitalStaff && !user.id) {
+      return res.status(401).json({
+        message: "ไม่พบบัญชีผู้ใช้งาน กรุณาลงทะเบียนก่อนเข้าสู่ระบบ",
+      });
+    }
+
+    // ตรวจสอบ password
+    const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
       return res.status(401).json({ message: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
     }
 
+    // กรณี Nurse
     let isTodayScheduled = false;
     // เช็คตารางเวรพยาบาลและอัปเดตสถานะ
     if (user.role === "nurse") {
@@ -135,10 +143,17 @@ exports.login = async (req, res) => {
       isTodayScheduled = rows.length > 0;
     }
 
-    // หัวหน้าพยาบาลกำหนดให้ประจำที่ counter
-    const canBeCounter = user.is_counter_terminal === 1
-    // รวมผลลัพธ์ สิทธิ์จากหัวหน้าพยาบาล + ตารางวันนี้
-    const isCounterTerminal = canBeCounter && isTodayScheduled;
+    const canBeCounter = user.is_counter_terminal === 1 // หัวหน้าพยาบาลกำหนดให้ประจำที่ counter
+    const isCounterTerminal = canBeCounter && isTodayScheduled; // รวมผลลัพธ์ สิทธิ์จากหัวหน้าพยาบาล + ตารางวันนี้
+    
+    // ---- service ids ----
+    let serviceIds = [];
+    if (user.role === "doctor" && user.service_ids) {
+      serviceIds = user.service_ids;
+    } else if (user.role === "nurse" && user.nurse_service_id) {
+      serviceIds = [user.nurse_service_id];
+    }
+
 
     // สร้าง JWT token
     const token = jwt.sign(
@@ -147,7 +162,7 @@ exports.login = async (req, res) => {
         role: user.role,
         email: user.email,
         entity_id: user.entity_id,
-        service_id: user.service_id || null,
+        service_id: serviceIds,
         is_counter_terminal: isCounterTerminal
       },
       process.env.JWT_SECRET,
@@ -159,10 +174,10 @@ exports.login = async (req, res) => {
       token,
       user: {
         id: user.id,
-        email: user.user_name,
+        email: user.email,
         role: user.role,
         entity_id: user.entity_id,
-        service_id: user.service_id || null,
+        service_id: serviceIds,
         is_counter_terminal: isCounterTerminal
       },
     });

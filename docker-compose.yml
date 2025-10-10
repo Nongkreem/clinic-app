@@ -26,3 +26,12 @@ services:
     depends_on:
       - db
     platform: linux/amd64   # ต้องใช้ emulation บน Apple Silicon
+  
+  flyway:
+    image: flyway/flyway:latest
+    container_name: flyway-container
+    depends_on:
+      - db
+    volumes:
+      - ./migrations:/flyway/sql     # ใส่ไฟล์ SQL migration ไว้ในโฟลเดอร์นี้
+    command: -url=jdbc:mysql://db:3306/clinic_db -user=my_user -password=my_password migrate

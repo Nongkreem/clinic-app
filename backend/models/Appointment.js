@@ -49,30 +49,30 @@ exports.createAppointment = async (
     // 4. Insert the new appointment record
     const [appointmentResult] = await connection.execute(
       `INSERT INTO appointment (
-                ers_id,
-                patient_id,
-                symptoms,
-                ds_id,
-                service_id,
-                doctor_id,
-                room_id,
-                appointment_date,
-                appointment_time,
-                status,
-                appointmentType
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ers_id,
+      patient_id,
+      symptoms,
+      ds_id,
+      appointment_date,
+      appointment_time,
+      status,
+      appointmentType,
+      service_id,
+      doctor_id,
+      room_id
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         slot.ers_id,
         patient_id,
         symptoms,
         slot.ds_id,
-        slot.service_id,
-        slot.doctor_id,
-        slot.room_id,
-        slot.schedule_date, // Use schedule_date from ds
-        slot.slot_start, // Use slot_start as appointment_time
-        "pending", // Initial status is 'pending'
+        slot.schedule_date,
+        slot.slot_start,
+        "pending",
         appointment_type,
+        slot.service_id,
+        slot.doctor_id, 
+        slot.room_id, 
       ]
     );
 
@@ -450,7 +450,7 @@ exports.getApprovedCheckedInAppointments = async (serviceId) => {
      LEFT JOIN doctors d ON a.doctor_id = d.doctor_id
      LEFT JOIN examRoom er ON a.room_id = er.room_id
      JOIN services s ON a.service_id = s.service_id
-     WHERE a.status = 'approved'
+     WHERE a.status = 'confirmed'
        AND a.confirmCheckInTime IS NOT NULL
        AND a.service_id = ?
      ORDER BY a.appointment_date, a.appointment_time`,
@@ -458,5 +458,3 @@ exports.getApprovedCheckedInAppointments = async (serviceId) => {
   );
   return rows;
 };
-
-

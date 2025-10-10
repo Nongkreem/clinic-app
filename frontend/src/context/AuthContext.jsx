@@ -43,6 +43,9 @@ export const AuthProvider = ({ children }) => {
       const response = await axios.post(`${API_BASE_URL}/api/auth/login`, { email, password });
       const { token, user: userData } = response.data; // user: userData เพื่อไม่ให้ชื่อซ้ำกับ state user
       localStorage.setItem('token', token);
+      if (userData.service_id) {
+        localStorage.setItem('service_id', userData.service_id);
+      }
       
       setToken(token);
       setUser({ email: userData.email, role: userData.role, id: userData.id, entity_id: userData.entity_id, is_counter_terminal: userData.is_counter_terminal, service_id: userData.service_id || null }); // ตั้งค่า user state

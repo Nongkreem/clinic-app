@@ -38,7 +38,8 @@ exports.getLatestPrecheckByAppointment = async (req, res) => {
   try {
     const { appointmentId } = req.params;
     const row = await Precheck.getLatestByAppointment(appointmentId);
-    res.status(200).json(row || null);
+    if (!row) return res.status(200).json(null); // ✅ ส่ง 200 แต่ไม่มีข้อมูล
+    res.status(200).json(row);
   } catch (err) {
     console.error('getLatestPrecheckByAppointment error:', err);
     res.status(500).json({ message: 'ไม่สามารถดึงข้อมูล precheck ได้' });

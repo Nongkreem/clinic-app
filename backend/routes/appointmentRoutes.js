@@ -12,7 +12,7 @@ router.post('/', authenticateToken, authorizeRole(['patient']), appointmentContr
 router.get('/my-appointments', authenticateToken, authorizeRole(['patient']), appointmentController.getPatientAppointments);
 router.get('/', authenticateToken, authorizeRole(['nurse', 'head_nurse']), appointmentController.getAppointments);
 // พยาบาลแผนกดึงรายการ: อนุมัติแล้ว + ผู้ป่วยเช็คอินแล้ว (confirmCheckInTime not null) + ตาม service ของตน
-router.get('/approved-with-checkin/:id', authenticateToken, authorizeRole(['nurse']), appointmentController.getApprovedCheckedInForService);
+router.get('/approved-with-checkin', authenticateToken, authorizeRole(['nurse']), appointmentController.getApprovedCheckedInForService);
 
 
 router.get('/:id', authenticateToken, authorizeRole(['patient', 'nurse', 'head_nurse']), appointmentController.getAppointmentById);
