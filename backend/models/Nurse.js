@@ -5,22 +5,22 @@ exports.createNurese = async ({ nurse_id, first_name, last_name, gmail, phone, s
   try {
     await connection.beginTransaction();
 
-    // 1. Insert into doctors table
+    // 1. Insert into nurse table
     const [nurseResult] = await connection.execute(
       'INSERT INTO nurse (nurse_id, first_name, last_name, gmail, phone, service_id) VALUES (?, ?, ?, ?, ?, ?)',
       [nurse_id, first_name, last_name, gmail, phone || null, service_id]
     );
 
-    await connection.execute(
-      'INSERT INTO user_accounts (email, password_hash, role, entity_id) VALUES (?, ?, ?, ?)',
-      [gmail, null, 'nurse', nurse_id]
-    );
+    // await connection.execute(
+    //   'INSERT INTO user_accounts (email, password_hash, role, entity_id) VALUES (?, ?, ?, ?)',
+    //   [gmail, null, 'nurse', nurse_id]
+    // );
 
     await connection.commit();
     return { nurse_id, first_name, last_name, gmail, phone, service_id };
   } catch (error) {
     await connection.rollback();
-    console.error('Error creating doctor:', error);
+    console.error('Error creating nurse:', error);
     throw error;
   } finally {
     connection.release();
@@ -48,4 +48,14 @@ exports.getAllNurses = async () => {
         console.error('Error fetching all nurses:', error);
         throw error;
     }
+}
+
+exports.deleteNurse = async (nurse_id) => {
+  try {
+    const [result] = await db.execute('DELETE FROM nurse WHERE nurse_id = ?', [nurse_id]);
+    return result.affectedRows > 0;
+  } catch (error) {
+    console.error('Error deleting nurse:', error);
+    throw error;
+  }
 }

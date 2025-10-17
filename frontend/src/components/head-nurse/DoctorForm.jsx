@@ -1,35 +1,35 @@
-import React, { useState, useEffect } from 'react';
-import FormGroup from '../common/FormGroup';
-import Button from '../common/Button';
-import axios from 'axios';
-import { Plus, Trash2 } from 'lucide-react'; // นำเข้าไอคอน Plus และ Trash2
-import ServiceDropdown from '../common/ServiceDropdown';
+import React, { useState, useEffect } from "react";
+import FormGroup from "../common/FormGroup";
+import Button from "../common/Button";
+import axios from "axios";
+import { Plus, Trash2 } from "lucide-react"; // นำเข้าไอคอน Plus และ Trash2
+import ServiceDropdown from "../common/ServiceDropdown";
 
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
-
+const API_BASE_URL =
+  import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";
 
 const DoctorForm = ({ initialData, onSaveSuccess, onCancel }) => {
-  const [doctorId, setDoctorId] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
+  const [doctorId, setDoctorId] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   // selectedServiceEntries: เก็บรายการของ { tempId: uniqueId, serviceId: 'value', serviceName: 'label' }
   const [selectedServiceEntries, setSelectedServiceEntries] = useState([]);
   const [allServiceOptions, setAllServiceOptions] = useState([]); // ตัวเลือกบริการทั้งหมด
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   // Effect สำหรับดึงตัวเลือกบริการทั้งหมดจาก Backend
   useEffect(() => {
     const fetchServiceOptions = async () => {
       try {
         const response = await axios.get(`${API_BASE_URL}/api/services`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         setAllServiceOptions(response.data);
       } catch (err) {
-        console.error('Failed to fetch service options:', err);
-        setError('ไม่สามารถโหลดตัวเลือกบริการได้');
+        console.error("Failed to fetch service options:", err);
+        setError("ไม่สามารถโหลดตัวเลือกบริการได้");
       }
     };
     fetchServiceOptions();
@@ -38,17 +38,17 @@ const DoctorForm = ({ initialData, onSaveSuccess, onCancel }) => {
   // Effect สำหรับตั้งค่าข้อมูลเริ่มต้นเมื่อ initialData เปลี่ยน (สำหรับการแก้ไข)
   useEffect(() => {
     if (initialData) {
-      setDoctorId(initialData.doctor_id || '');
-      setFullName(initialData.full_name || '');
-      setPhone(initialData.phone_number || '');
-      setEmail(initialData.email || '');
+      setDoctorId(initialData.doctor_id || "");
+      setFullName(initialData.full_name || "");
+      setPhone(initialData.phone_number || "");
+      setEmail(initialData.email || "");
       // โหลดบริการที่เลือกไว้เดิม
       if (initialData.services && Array.isArray(initialData.services)) {
         setSelectedServiceEntries(
-          initialData.services.map(service => ({
+          initialData.services.map((service) => ({
             tempId: crypto.randomUUID(), // สร้าง tempId สำหรับ key
             serviceId: service.service_id.toString(),
-            serviceName: service.service_name
+            serviceName: service.service_name,
           }))
         );
       } else {
@@ -56,39 +56,42 @@ const DoctorForm = ({ initialData, onSaveSuccess, onCancel }) => {
       }
     } else {
       // สำหรับการเพิ่มใหม่, เคลียร์ฟอร์ม
-      setDoctorId('');
-      setFullName('');
-      setPhone('');
-      setEmail('');
+      setDoctorId("");
+      setFullName("");
+      setPhone("");
+      setEmail("");
       setSelectedServiceEntries([]);
     }
-    setError('');
+    setError("");
   }, [initialData]);
 
   // ฟังก์ชันสำหรับเพิ่มช่องเลือกบริการใหม่
   const handleAddServiceField = () => {
-    setSelectedServiceEntries(prevEntries => [
+    setSelectedServiceEntries((prevEntries) => [
       ...prevEntries,
-      { tempId: crypto.randomUUID(), serviceId: '', serviceName: '' } // เพิ่มช่องว่างพร้อม tempId
+      { tempId: crypto.randomUUID(), serviceId: "", serviceName: "" }, // เพิ่มช่องว่างพร้อม tempId
     ]);
   };
 
   // ฟังก์ชันสำหรับลบช่องเลือกบริการ
   const handleRemoveServiceField = (tempIdToRemove) => {
-    setSelectedServiceEntries(prevEntries =>
-      prevEntries.filter(entry => entry.tempId !== tempIdToRemove)
+    setSelectedServiceEntries((prevEntries) =>
+      prevEntries.filter((entry) => entry.tempId !== tempIdToRemove)
     );
   };
 
   // ฟังก์ชันสำหรับจัดการการเปลี่ยนแปลงค่าในแต่ละ Dropdown
-  const handleServiceChange = (tempIdToUpdate, selectedService) => { // รับ selectedService เป็น Object
-    setSelectedServiceEntries(prevEntries =>
-      prevEntries.map(entry => {
+  const handleServiceChange = (tempIdToUpdate, selectedService) => {
+    // รับ selectedService เป็น Object
+    setSelectedServiceEntries((prevEntries) =>
+      prevEntries.map((entry) => {
         if (entry.tempId === tempIdToUpdate) {
           return {
             ...entry,
-            serviceId: selectedService ? selectedService.service_id.toString() : '', // เก็บ ID เป็น String
-            serviceName: selectedService ? selectedService.service_name : ''
+            serviceId: selectedService
+              ? selectedService.service_id.toString()
+              : "", // เก็บ ID เป็น String
+            serviceName: selectedService ? selectedService.service_name : "",
           };
         }
         return entry;
@@ -96,50 +99,55 @@ const DoctorForm = ({ initialData, onSaveSuccess, onCancel }) => {
     );
   };
 
-
   // ฟังก์ชันสำหรับกรองตัวเลือกที่ยังไม่ถูกเลือก
-   const getAvailableServiceOptions = (currentServiceId) => {
+  const getAvailableServiceOptions = (currentServiceId) => {
     // ID ของบริการที่ถูกเลือกใน Dropdown อื่นๆ (ที่ไม่ใช่ Dropdown ปัจจุบัน)
     const currentlySelectedIdsInOtherDropdowns = selectedServiceEntries
-      .filter(entry => entry.serviceId && entry.serviceId !== currentServiceId)
-      .map(entry => entry.serviceId);
+      .filter(
+        (entry) => entry.serviceId && entry.serviceId !== currentServiceId
+      )
+      .map((entry) => entry.serviceId);
 
     // กรอง allServiceOptions ที่มีอยู่ทั้งหมด
-    return allServiceOptions.filter(serviceOption =>
-      !currentlySelectedIdsInOtherDropdowns.includes(serviceOption.service_id.toString())
+    return allServiceOptions.filter(
+      (serviceOption) =>
+        !currentlySelectedIdsInOtherDropdowns.includes(
+          serviceOption.service_id.toString()
+        )
     );
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
 
     const serviceIdsToSend = selectedServiceEntries
-      .map(entry => parseInt(entry.serviceId, 10))
-      .filter(id => !isNaN(id)); // กรองเฉพาะ ID ที่ถูกต้อง
+      .map((entry) => parseInt(entry.serviceId, 10))
+      .filter((id) => !isNaN(id)); // กรองเฉพาะ ID ที่ถูกต้อง
 
     // Validation
     if (!fullName.trim() || serviceIdsToSend.length === 0) {
-      setError('กรุณากรอกชื่อเต็มและเลือกบริการที่ให้ได้อย่างน้อยหนึ่งรายการ');
+      setError("กรุณากรอกชื่อเต็มและเลือกบริการที่ให้ได้อย่างน้อยหนึ่งรายการ");
       setLoading(false);
       return;
     }
     if (!initialData) {
       // ตรวจสอบความยาวรวมต้องเป็น 6 และรูปแบบต้องขึ้นต้นด้วย D ตามด้วยตัวเลข 5 หลัก
       if (doctorId.length !== 6 || !/^D\d{5}$/.test(doctorId)) {
-        setError('รหัสประจำตัวแพทย์ต้องขึ้นต้นด้วย D และตามด้วยตัวเลข 5 หลัก');
+        setError("รหัสประจำตัวแพทย์ต้องขึ้นต้นด้วย D และตามด้วยตัวเลข 5 หลัก");
         setLoading(false);
         return;
       }
     }
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError('รูปแบบอีเมลไม่ถูกต้อง');
+    if (email && !/^[^\s@]+@vejnaree\.ac\.th$/.test(email)) {
+      setError("อีเมลต้องลงท้ายด้วย @vejnaree.ac.th");
       setLoading(false);
       return;
     }
-    if (phone && !/^\d{9,10}$/.test(phone)) { // ตัวอย่าง: 9 หรือ 10 หลัก
-      setError('รูปแบบเบอร์โทรศัพท์ไม่ถูกต้อง (ตัวเลข 9-10 หลัก)');
+    if (phone && !/^\d{9,10}$/.test(phone)) {
+      // ตัวอย่าง: 9 หรือ 10 หลัก
+      setError("รูปแบบเบอร์โทรศัพท์ไม่ถูกต้อง (ตัวเลข 9-10 หลัก)");
       setLoading(false);
       return;
     }
@@ -151,24 +159,32 @@ const DoctorForm = ({ initialData, onSaveSuccess, onCancel }) => {
       email: email.trim(),
       service_ids: serviceIdsToSend,
     };
-    console.log('Doctor data sent to backend:', doctorData); // <--- เพิ่มบรรทัดนี้
+    console.log("Doctor data sent to backend:", doctorData); // <--- เพิ่มบรรทัดนี้
 
     try {
       if (initialData && initialData.doctor_id) {
         // อัปเดตแพทย์
-        await axios.put(`${API_BASE_URL}/api/doctors/${initialData.doctor_id}`, doctorData, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
+        await axios.put(
+          `${API_BASE_URL}/api/doctors/${initialData.doctor_id}`,
+          doctorData,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
       } else {
         // สร้างแพทย์ใหม่
         await axios.post(`${API_BASE_URL}/api/doctors`, doctorData, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
       }
       onSaveSuccess(); // แจ้ง Parent ว่าบันทึกสำเร็จ
     } catch (err) {
-      console.error('Error saving doctor:', err);
-      setError(err.response?.data?.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูลแพทย์');
+      console.error("Error saving doctor:", err);
+      setError(
+        err.response?.data?.message || "เกิดข้อผิดพลาดในการบันทึกข้อมูลแพทย์"
+      );
     } finally {
       setLoading(false);
     }
@@ -177,7 +193,10 @@ const DoctorForm = ({ initialData, onSaveSuccess, onCancel }) => {
   return (
     <form onSubmit={handleSubmit}>
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-4" role="alert">
+        <div
+          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-4"
+          role="alert"
+        >
           <span className="block sm:inline">{error}</span>
         </div>
       )}
@@ -242,8 +261,10 @@ const DoctorForm = ({ initialData, onSaveSuccess, onCancel }) => {
           <div key={entry.tempId} className="flex items-center gap-2 mb-2">
             <ServiceDropdown
               value={entry.serviceId}
-              onChange={(selectedService) => handleServiceChange(entry.tempId, selectedService)}
-              options={getAvailableServiceOptions(entry.serviceId)} 
+              onChange={(selectedService) =>
+                handleServiceChange(entry.tempId, selectedService)
+              }
+              options={getAvailableServiceOptions(entry.serviceId)}
               className="flex-grow mb-0"
             />
             <Button
@@ -267,7 +288,9 @@ const DoctorForm = ({ initialData, onSaveSuccess, onCancel }) => {
           เพิ่มบริการ
         </Button>
         {selectedServiceEntries.length === 0 && (
-          <p className="text-red-500 text-xs mt-1">กรุณาเลือกบริการอย่างน้อยหนึ่งรายการ</p>
+          <p className="text-red-500 text-xs mt-1">
+            กรุณาเลือกบริการอย่างน้อยหนึ่งรายการ
+          </p>
         )}
       </div>
 
@@ -282,10 +305,14 @@ const DoctorForm = ({ initialData, onSaveSuccess, onCancel }) => {
         </Button>
         <Button
           type="submit"
-          variant={initialData ? 'primary' : 'success'}
+          variant={initialData ? "primary" : "success"}
           disabled={loading}
         >
-          {loading ? 'กำลังบันทึก...' : (initialData ? 'บันทึกการแก้ไข' : 'เพิ่มแพทย์')}
+          {loading
+            ? "กำลังบันทึก..."
+            : initialData
+            ? "บันทึกการแก้ไข"
+            : "เพิ่มแพทย์"}
         </Button>
       </div>
     </form>

@@ -9,9 +9,10 @@ exports.createNurese = async (req, res) => {
     if (nurse_id.length != 6 || !/^N\d{5}$/.test(nurse_id)) {
         return res.status(400).json({ message: 'รหัสประจำตัวพยาบาลต้องขึ้นต้นด้วย N และตามด้วยตัวเลข 5 หลัก'});
     }
-    if (gmail && !/@hospital\.com$/.test(gmail)) {
-        return res.status(400).json({ message: 'ที่อยู่อีเมลต้องลงท้ายด้วย @hospital.com'});
+    if (!gmail.endsWith('@vejnaree.ac.th')) {
+        return res.status(400).json({ message: 'อีเมลต้องลงท้ายด้วย @vejnaree.ac.th เท่านั้น' });
     }
+
 
     try {
         const newNurse = await Nurse.createNurese({ nurse_id, first_name, last_name, gmail, phone, service_id });
@@ -35,3 +36,18 @@ exports.getAllNurses = async (req, res) => {
     res.status(500).json({ message: 'ไม่สามารถดึงข้อมูลพยาบาลได้' });
   }
 };
+
+exports.deleteNurse = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const deleted = await Nurse.deleteNurse(id);
+        if (deleted) {
+          res.status(200).json({ message: 'ลบข้อมูลแพทย์สำเร็จ!' });
+        } else {
+          res.status(404).json({ message: 'ไม่พบข้อมูลแพทย์ที่ต้องการลบ' });
+        }
+      } catch (error) {
+        console.error('Error in deleteGuidance controller:', error);
+        res.status(500).json({ message: 'เกิดข้อผิดพลาดในการลบพยาบาล' });
+      }
+}

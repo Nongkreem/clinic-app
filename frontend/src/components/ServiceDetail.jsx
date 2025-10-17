@@ -11,21 +11,17 @@ const ServiceDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // ✅ เปลี่ยนชื่อฟังก์ชันให้ชัดเจนและเรียกใช้ให้ถูกต้อง
   const fetchPublicServices = async () => {
     setLoading(true);
     setError('');
 
     try {
-      // ✅ สำคัญ: Endpoint นี้จะต้องถูกตั้งค่าใน Backend ให้เข้าถึงได้โดยไม่ต้องใช้ Token
-      // ผมแนะนำให้สร้าง Endpoint ใหม่ เช่น /api/public/services เพื่อความชัดเจน
-      const response = await axios.get(`${API_BASE_URL}/api/public/services`); 
-      // ✅ ไม่ต้องส่ง Authorization header เพราะเป็น Public Endpoint
+      const response = await axios.get(`${API_BASE_URL}/api/services/publish`); 
       
-      setServices(response.data); // ✅ กำหนดข้อมูลที่ได้ (ซึ่งควรเป็น Array) ให้กับ state 'services'
+      setServices(response.data);
+      console.log(services)
     } catch (err) {
       console.error('Failed to fetch public services:', err);
-      // ข้อความ Error สำหรับผู้ใช้ทั่วไป (ไม่ควรแสดงรายละเอียดทางเทคนิคมากเกินไป)
       setError('ไม่สามารถโหลดข้อมูลบริการได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง');
     } finally {
       setLoading(false);
@@ -33,8 +29,8 @@ const ServiceDetail = () => {
   };
 
   useEffect(() => {
-    fetchPublicServices(); // ✅ เรียกใช้ฟังก์ชันที่ถูกต้อง
-  }, []); // Dependency array ว่างเปล่า เพื่อให้เรียกใช้แค่ครั้งเดียวเมื่อ Component ถูก Mount
+    fetchPublicServices(); 
+  }, []);
 
   if (loading) {
     return (
@@ -54,23 +50,21 @@ const ServiceDetail = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold text-center text-gray-800 mb-10">บริการของเรา</h1>
+      <h1 className="text-4xl font-bold text-center text-pavlova-600 mb-4">บริการของเรา</h1>
+      <div className="w-16 h-[1px] bg-primary-default mx-auto rounded-full mb-10"></div>
       {services.length === 0 ? (
         <p className="text-center text-gray-600 text-lg">ยังไม่มีบริการให้แสดงในขณะนี้</p>
       ) : (
-        // ✅ วนลูปเพื่อแสดงบริการแต่ละรายการ
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {services.map((service) => (
             <div
-              key={service.service_id} // ✅ ใช้ service_id เป็น key
-              className="bg-white rounded-lg shadow-lg overflow-hidden transform transition-transform duration-300 hover:scale-105"
+              key={service.service_id}
+              className="mt-8 bg-white rounded-lg shadow-lg overflow-hidden transform transition-transform duration-300 hover:scale-105"
             >
               <img
-                // ✅ ใช้ service.picture_path หรือใช้ placeholder หากไม่มี/ผิดพลาด
-                src={service.picture_path || 'https://placehold.co/600x400/E0F2F7/000?text=No+Image'} 
+                src={`/assets/${service.img_path}` || 'https://placehold.co/600x400/E0F2F7/000?text=No+Image'} 
                 alt={service.service_name || 'Service Image'}
                 className="w-full h-48 object-cover"
-                // Fallback สำหรับรูปภาพที่โหลดไม่ได้
                 onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/600x400/E0F2F7/000?text=Image+Error'; }} 
               />
               <div className="p-6">

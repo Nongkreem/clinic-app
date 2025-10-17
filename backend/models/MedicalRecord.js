@@ -48,7 +48,7 @@ exports.createFromAppointment = async ({ appointment_id, doctor_id, diagnosis, t
 
     // 3) ปิดนัด เป็น complete
     await conn.execute(
-      `UPDATE appointment SET status = 'complete' WHERE appointment_id = ?`,
+      `UPDATE appointment SET status = 'completed' WHERE appointment_id = ?`,
       [appointment_id]
     );
 
@@ -58,6 +58,62 @@ exports.createFromAppointment = async ({ appointment_id, doctor_id, diagnosis, t
     await conn.rollback();
     console.error('createFromAppointment model error:', e);
     return { success: false, message: 'บันทึกไม่สำเร็จ' };
+  } finally {
+    conn.release();
+  }
+};
+
+
+// อัปเดต record (ตรวจสิทธิ์ว่าเจ้าของคือหมอที่ล็อกอิน)
+exports.updateRecord = async ({ record_id, doctor_id, diagnosis, treatment, note, follow_up_date }) => {
+  const conn = await db.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    // ตรวจว่าของหมอคนนี้หรือไม่
+    const [[rec]] = await conn.query(
+      `SELECT record_id, doctor_id FROM medicalRecord WHERE record_id = ?`,
+      [record_id]
+    );
+    if (!rec || rec.doctor_id !== doctor_id) {
+      await conn.rollback();
+      return false;
+    }
+
+    const fields = [];
+    const params = [];
+
+    if (diagnosis !== null && diagnosis !== undefined) {
+      fields.push('diagnosis = ?'); params.push(diagnosis);
+    }
+    if (treatment !== null && treatment !== undefined) {
+      fields.push('treatment = ?'); params.push(treatment);
+    }
+    if (note !== null && note !== undefined) {
+      fields.push('other_notes = ?'); params.push(note);
+    }
+    if (follow_up_date !== null && follow_up_date !== undefined) {
+      fields.push('follow_up_date = ?'); params.push(follow_up_date);
+    }
+
+    if (fields.length === 0) {
+      await conn.rollback();
+      return false;
+    }
+
+    params.push(record_id);
+
+    await conn.execute(
+      `UPDATE medicalRecord SET ${fields.join(', ')} WHERE record_id = ?`,
+      params
+    );
+
+    await conn.commit();
+    return true;
+  } catch (e) {
+    await conn.rollback();
+    console.error('updateRecord model error:', e);
+    return false;
   } finally {
     conn.release();
   }

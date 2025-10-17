@@ -23,7 +23,7 @@ exports.upsert = async ({
       const precheck_id = exists[0].precheck_id;
       await conn.execute(
         `UPDATE patient_precheck
-         SET nurse_id=?, blood_pressure=?, heart_rate=?, temperature=?, weight=?, height=?, other_notes=?, created_at=NOW()
+         SET nurse_id=?, blood_pressure=?, heart_rate=?, temperature=?, weight=?, height=?, other_notes=?, updated_at=NOW()
          WHERE precheck_id=?`,
         [nurse_id, blood_pressure, heart_rate, temperature, weight, height, other_notes, precheck_id]
       );
@@ -49,7 +49,7 @@ exports.upsert = async ({
 
 exports.getLatestByAppointment = async (appointment_id) => {
   const [rows] = await db.execute(
-    `SELECT * FROM patient_precheck WHERE appointment_id = ? ORDER BY created_at DESC LIMIT 1`,
+    `SELECT * FROM patient_precheck WHERE appointment_id = ? ORDER BY updated_at DESC, created_at DESC`,
     [appointment_id]
   );
   return rows[0] || null;

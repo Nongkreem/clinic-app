@@ -49,6 +49,7 @@ const NursePrecheckManage = () => {
         }
       );
       setPrecheckData((prev) => ({ ...prev, [appointmentId]: res.data }));
+      console.log("Precheck data: ", precheckData);
     } catch (err) {
       console.error("Failed to fetch precheck:", err);
     }
@@ -118,6 +119,22 @@ const NursePrecheckManage = () => {
     return timeString.slice(0, 5);
   };
 
+  // ฟังก์ชันช่วยสร้าง label ของประเภทนัดหมาย
+  const renderAppointmentType = (type) => {
+    if (type === "doctor_follow_up") {
+      return (
+        <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-md">
+          นัดติดตามอาการ
+        </span>
+      );
+    }
+    return (
+      <span className="inline-block bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-md">
+        นัดหมายโดยคนไข้
+      </span>
+    );
+  };
+
   return (
     <div className="m-8">
       <h2 className="mb-6 text-2xl font-bold text-primary-default">
@@ -127,6 +144,7 @@ const NursePrecheckManage = () => {
       {loading && (
         <p className="text-center text-gray-500">กำลังโหลดข้อมูล...</p>
       )}
+
       {error && (
         <div
           className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-4"
@@ -135,6 +153,7 @@ const NursePrecheckManage = () => {
           <span className="block sm:inline">{error}</span>
         </div>
       )}
+
       {!loading && appointments.length === 0 && (
         <p className="text-center text-gray-500">
           ไม่พบนัดหมายที่รอการตรวจสุขภาพ
@@ -158,6 +177,9 @@ const NursePrecheckManage = () => {
                 <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">
                   วัน/เวลา
                 </th>
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">
+                  ประเภทนัดหมาย
+                </th>
                 <th className="py-3 px-4 text-center text-sm font-semibold text-gray-700 w-16"></th>
               </tr>
             </thead>
@@ -179,6 +201,9 @@ const NursePrecheckManage = () => {
                       {getFormattedDate(appt.appointment_date)} เวลา{" "}
                       {getFormattedTime(appt.appointment_time)}
                     </td>
+                    <td className="py-3 px-4">
+                      {renderAppointmentType(appt.appointmentType)}
+                    </td>
                     <td className="py-3 px-4 text-center">
                       <button
                         onClick={() => handleToggleDetails(appt.appointment_id)}
@@ -195,9 +220,9 @@ const NursePrecheckManage = () => {
 
                   {expandedAppointmentId === appt.appointment_id && (
                     <tr className="bg-stromboli-50 border-b border-gray-200">
-                      <td colSpan="5" className="p-4">
+                      <td colSpan="6" className="p-4">
                         <div className="flex flex-col md:flex-row gap-6 text-sm text-gray-700">
-                          {/* ด้านซ้าย (30%) */}
+                          {/* ซ้าย: อาการที่แจ้ง */}
                           <div className="md:w-1/3">
                             <h4 className="font-semibold text-gray-800 mb-2">
                               อาการที่แจ้ง
@@ -205,10 +230,10 @@ const NursePrecheckManage = () => {
                             <p>{appt.symptoms || "-"}</p>
                           </div>
 
-                          {/* ด้านขวา (70%) */}
+                          {/* ขวา: ค่าสุขภาพ */}
                           <div className="md:w-2/3">
                             <h4 className="font-semibold text-gray-800 mb-2">
-                              ค่าที่พยาบาลกรอกล่าสุด
+                              ค่าสุขภาพเบื้องต้นล่าสุด
                             </h4>
                             {precheckData[appt.appointment_id] ? (
                               <ul className="space-y-1">
@@ -263,6 +288,11 @@ const NursePrecheckManage = () => {
                               handleSendToDoctor(appt.appointment_id)
                             }
                             className="p-2 text-sm"
+                            disabled={
+                              !precheckData[appt.appointment_id] ||
+                              Object.keys(precheckData[appt.appointment_id])
+                                .length === 0
+                            }
                           >
                             ส่งตรวจ
                           </Button>
@@ -277,7 +307,7 @@ const NursePrecheckManage = () => {
         </div>
       )}
 
-      {/* Popup Form สำหรับเพิ่ม/แก้ไขค่าสุขภาพ */}
+      {/* Popup ฟอร์ม */}
       <Popup
         isOpen={isPopupOpen}
         onClose={handleClosePopup}

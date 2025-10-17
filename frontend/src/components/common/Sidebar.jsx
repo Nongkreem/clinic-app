@@ -9,29 +9,32 @@ import Bar_3_bottom_right from "../icons/Bar_3_bottom_right";
 
 const menuByRole = {
   doctor: [
-    { label: "Dashboard", path: "/doctor/dashboard" },
-    { label: "Appointments", path: "/doctor/appointments" },
-    { label: "Reports", path: "/doctor/reports" },
+    { label: "วินิจฉัย", path: "/doctor/diagnosis"},
+    { label: "ใบรับรองแพทย์", path: "/doctor/medical-certificates"},
   ],
   nurse: [
-    { label: "คำขอนัดหมาย", path: "/nurse-dashboard/appointment-req" },
+    { label: "คำขอนัดหมาย", path: "/nurse/appointment-req" },
   ],
   nurseCounter: [
-    { label: "Precheck", path: "/nurse-dashboard/nurse-precheck" },
+    { label: "Precheck", path: "/nurse/precheck" },
   ],
   head_nurse: [
-    { label: "คำแนะนำการเตรียมตัว", path: "/head_nurse-dashboard/guide" },
-    { label: "ข้อมูลบริการ", path: "head_nurse-dashboard/services" },
-    { label: "ข้อมูลห้องตรวจ", path: "/head_nurse-dashboard/examination-room" },
-    { label: "ข้อมูลแพทย์", path: "/head_nurse-dashboard/doctors" },
+    { label: "คำแนะนำการเตรียมตัว", path: "/head_nurse/guide" },
+    { label: "ข้อมูลบริการ", path: "head_nurse/services" },
+    { label: "ข้อมูลห้องตรวจ", path: "/head_nurse/examination-room" },
+    { label: "ข้อมูลแพทย์", path: "/head_nurse/doctors" },
     {
       label: "ข้อมูลตารางออกตรวจแพทย์",
-      path: "/head_nurse-dashboard/schedules",
+      path: "/head_nurse/schedules",
     },
-    { label: "ข้อมูลพยาบาล", path: "/head_nurse-dashboard/nurses" },
+    { label: "ข้อมูลพยาบาล", path: "/head_nurse/nurses" },
     {
       label: "ข้อมูลตารางเวรพยาบาล",
-      path: "/head_nurse-dashboard/nurses-schedules",
+      path: "/head_nurse/nurses-schedules",
+    },
+    {
+      label: "จัดการแบบประเมินอาการ",
+      path: "/head_nurse/symptom-question",
     },
   ],
 };

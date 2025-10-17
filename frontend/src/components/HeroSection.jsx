@@ -2,8 +2,18 @@ import React from 'react'
 import headerImg from '../../public/assets/header.jpg';
 import Button from './common/Button';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+
 const HeroSection = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+
+  const handleClick = () => {
+    if (!isAuthenticated) navigate('/login');
+    else navigate('/patient/create-appointment');
+  };
+
+
   return (
     <div className='relative rounded-lg overflow-hidden'>
       <img src={headerImg} alt="" className='w-full h-[600px] object-cover'/>
@@ -17,7 +27,7 @@ const HeroSection = () => {
           </div>
           <p className='text-white'>จองคิวตรวจกับแพทย์เฉพาะทางนรีเวชที่คุณไว้วางใจได้ง่ายๆ<br/>ผ่านระบบออนไลน์ สะดวก ปลอดภัย และเป็นส่วนตัว<br/>พร้อมดูแลสุขภาพคุณผู้หญิงอย่างครบวงจร</p>
         </div>
-        <Button onClick={()=>navigate('/patient/create-appointment')} className="bg-secondary-default hover:bg-secondary-dark">สร้างนัดหมายเลย</Button>
+        <Button onClick={handleClick} className='bg-secondary-default'>สร้างนัดหมายเลย</Button>
       </div>
     </div>
   )

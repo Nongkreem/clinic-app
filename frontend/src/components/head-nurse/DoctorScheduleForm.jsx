@@ -133,8 +133,7 @@ const DoctorScheduleForm = ({ initialData, onSaveSuccess, onCancel }) => {
           ...prev,
           [initialData.service_id]: doctorsRes.data.map(item => ({ value: item.doctor_id, label: item.full_name }))
         }));
-        // For initial data, we don't apply in-form filtering initially, as it's a single entry.
-        // It will be filtered later if user adds more rows.
+
         setFetchedRoomsByScheduleRow(prev => ({
           ...prev,
           [initialData.tempId]: roomsRes.data.map(item => ({ value: item.room_id.toString(), label: item.room_name }))

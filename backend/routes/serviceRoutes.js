@@ -10,6 +10,8 @@ router.post('/services', authenticateToken, authorizeRole(['nurse', 'head_nurse'
 // Route สำหรับดึงข้อมูลบริการทั้งหมด
 router.get('/services', authenticateToken, authorizeRole(['nurse', 'head_nurse', 'patient']), serviceController.getAllServices);
 
+router.get('/services/publish', serviceController.getAllServices);
+
 // Route สำหรับอัปเดตข้อมูลบริการ
 router.put('/services/:id', authenticateToken, authorizeRole(['nurse', 'head_nurse']), serviceController.updateService);
 

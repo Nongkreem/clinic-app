@@ -22,6 +22,7 @@ export default {
           light: "#ddeee2",
           darklight: "#A4B6AE",
           dark: "#0e2019",
+          opa: "#A4B6AE"
         },
         pavlova: {
           50: "#faf7f2",
@@ -40,6 +41,8 @@ export default {
           default: "#b07c19",
           light: "#DAC7A2",
           dark: "#3b200d",
+          superlight: "#FFFCF6",
+          gold: "#D9C398"
         },
       },
     },

@@ -1,29 +1,73 @@
-import React from 'react'
-import { assets } from '../../public/assets/assets'
+import React, { useRef } from "react";
+import { motion, useInView } from "framer-motion";
+import { assets } from "../../public/assets/assets";
 
 const BookingProcedure = () => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+
   return (
-    <div className='flex w-full mt-20 bg-primary-default rounded-tl-[100px]'>
-      {/* Left side */}
-      <div className='w-1/2'>
-        <div className='flex flex-col items-center justify-center mt-16 gap-4'>
-            <h1 className='text-white text-4xl font-semibold'>ไม่ต้องกังวล</h1>
-            <div className='flex flex-col items-center gap-2'>
-                <p className='text-white text-2xl font-medium align-middle'>ถ้าไม่รู้ว่าเข้ารับบริการเเบบไหน</p>
-                <p className='text-white text-2xl font-medium align-middle'>เรามีแบบประเมินอาการ</p>
-            </div>
-        </div>
-        <img className='bottom-0' src={assets.doctorSayYes} alt="" />
-      </div>
-      {/* Right side */}
-      <div className='w-1/2 grid grid-cols-2 gap-4 m-6'>
-        <div className="bg-secondary-light p-4 rounded-lg">A</div>
-        <div className="bg-primary-light p-4 rounded-lg ">B</div>
-        <div className="bg-primary-light p-4 rounded-lg ">C</div>
-        <div className="bg-secondary-light p-4 rounded-lg">D</div>
+    <div
+      ref={ref}
+      className="relative w-full mt-24 py-20 overflow-hidden"
+    >
+      {/* Background decoration */}
+      <div className="absolute inset-0 bg-[url('/assets/pattern-bg.svg')] opacity-5"></div>
+
+      {/* Center content */}
+      <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 md:px-20">
+        
+        {/* Title */}
+        <motion.h1
+          initial={{ opacity: 0, y: 40 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.8 }}
+          className="text-4xl md:text-5xl font-semibold text-primary-default mb-6"
+        >
+          ไม่ต้องกังวล
+        </motion.h1>
+
+        {/* Subtext */}
+        <motion.p
+          initial={{ opacity: 0, y: 40 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 1.2, delay: 0.3 }}
+          className="text-2xl md:text-3xl text-gray-800 font-medium leading-relaxed"
+        >
+          หากคุณไม่แน่ใจว่าควรเข้ารับบริการแบบใด
+        </motion.p>
+
+        <motion.p
+          initial={{ opacity: 0, y: 40 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 1.2, delay: 0.6 }}
+          className="text-2xl md:text-3xl text-gray-800 font-medium leading-relaxed mb-10"
+        >
+          ระบบของเรามี “แบบประเมินอาการ” เพื่อช่วยแนะนำให้คุณได้
+        </motion.p>
+
+        {/* Doctor image */}
+        <motion.img
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={isInView ? { opacity: 1, scale: 1 } : {}}
+          transition={{ duration: 0.8, delay: 0.9 }}
+          src={assets.doctorSayYes}
+          alt="Doctor illustration"
+          className="w-[320px] md:w-[420px] mt-10"
+        />
+
+        {/* CTA */}
+        <motion.button
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 1, delay: 1.2 }}
+          className="mt-10 bg-primary-default text-white px-8 py-3 rounded-full text-lg hover:bg-primary-dark transition-all shadow-md"
+        >
+          เริ่มทำแบบประเมินอาการ
+        </motion.button>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default BookingProcedure
+export default BookingProcedure;

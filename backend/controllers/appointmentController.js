@@ -1,5 +1,3 @@
-console.log('Loading appointmentController.js file'); // ✅ เพิ่ม Log นี้ที่บรรทัดแรกสุดของไฟล์
-
 const DoctorSchedule = require('../models/DoctorSchedules');
 const Appointment = require('../models/Appointment');
 const PatientModel = require('../models/Patient');

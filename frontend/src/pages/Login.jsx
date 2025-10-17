@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import FormGroup from "../components/common/FormGroup";
 import Button from "../components/common/Button";
@@ -13,42 +13,56 @@ const Login = () => {
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setMessage("");
+  e.preventDefault();
+  setError("");
+  setMessage("");
 
-    const result = await login(email, password);
+  const result = await login(email, password);
 
-    if (result.success) {
-      setMessage(result.message);
-      // Redirect based on role
-      // ควรใช้ user จาก context โดยตรงหลังจาก login สำเร็จ
-      const user = JSON.parse(localStorage.getItem("user")); // หรือดึงจาก useAuth().user ถ้ามีการ update state ทันที
-      if (user) {
-        switch (user.role) {
-          case "patient":
-            navigate("/patient/home");
-            break;
-          case "doctor":
-            navigate("/doctor-dashboard");
-            break;
-          case "nurse":
-            navigate("/nurse-dashboard");
-            break;
-          case "head_nurse":
-            navigate("/head-nurse-dashboard");
-            break;
-          default:
-            navigate("/"); // Fallback
-            break;
-        }
-      } else {
-        navigate("/"); // Fallback if user data is missing
+  if (result.success) {
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (user?.role) {
+      switch (user.role) {
+        case "patient":
+          navigate("/patient/home", { replace: true });
+          break;
+        case "doctor":
+          navigate("/doctor", { replace: true });
+          break;
+        case "nurse":
+          navigate("/nurse", { replace: true });
+          break;
+        case "head_nurse":
+          navigate("/head_nurse", { replace: true });
+          break;
+        default:
+          navigate("/landing", { replace: true });
+          break;
       }
     } else {
-      setError(result.message);
+      setError("ไม่พบข้อมูลผู้ใช้หลังเข้าสู่ระบบ");
     }
-  };
+  } else {
+    setError(result.message || "เข้าสู่ระบบไม่สำเร็จ");
+  }
+};
+const { isAuthenticated, user } = useAuth();
+
+if (isAuthenticated && user?.role) {
+  switch (user.role) {
+    case "patient":
+      return <Navigate to="/patient/home" replace />;
+    case "doctor":
+      return <Navigate to="/doctor" replace />;
+    case "nurse":
+      return <Navigate to="/nurse" replace />;
+    case "head_nurse":
+      return <Navigate to="/head_nurse" replace />;
+    default:
+      return <Navigate to="/landing" replace />;
+  }
+}
 
   return (
     <div className="min-h-screen flex ">

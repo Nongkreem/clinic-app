@@ -95,8 +95,19 @@ exports.deleteSchedule = async (req, res) => {
         }
     } catch (error) {
         console.error('Error in deleteSchedule controller:', error);
-        res.status(500).json({ message: 'เกิดข้อผิดพลาดในการลบตารางออกตรวจ' });
-    }
+        // ตรวจสอบข้อความ error จาก Model
+        if (
+            error.message.includes("ไม่สามารถลบตารางออกตรวจได้") ||
+            error.message.includes("การนัดหมายของแพทย์ในตารางนี้")
+        ) {
+            return res.status(400).json({ message: error.message }); // ส่งข้อความจริงไปยัง FE
+        }
+
+        // ถ้าเป็น error อื่น เช่น Database connection
+        return res
+            .status(500)
+            .json({ message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์ กรุณาลองใหม่อีกครั้ง" });
+        }
 };
 
 exports.getScheduleById = async (req, res) => {

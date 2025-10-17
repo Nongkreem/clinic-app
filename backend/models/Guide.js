@@ -1,10 +1,7 @@
 // backend/models/PreparationGuidance.js
 const db = require('../config/db');
 
-/**
- * ดึงข้อมูลคำแนะนำการเตรียมตัวทั้งหมด
- * @returns {Promise<Array<Object>>} - Array ของ Object คำแนะนำ
- */
+
 exports.getAll = async () => {
   try {
     const [rows] = await db.execute('SELECT advice_id, advice_text FROM advice ORDER BY advice_text');
@@ -45,11 +42,7 @@ exports.update = async (advice_id, { advice_text }) => {
   }
 };
 
-/**
- * ลบคำแนะนำการเตรียมตัว
- * @param {number} advice_id - ID ของคำแนะนำที่ต้องการลบ
- * @returns {Promise<boolean>} - true ถ้าลบสำเร็จ, false ถ้าไม่พบ ID
- */
+
 exports.delete = async (advice_id) => {
   try {
     // ลบโดยใช้ advice_id

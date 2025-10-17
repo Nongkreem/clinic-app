@@ -25,7 +25,7 @@ const AppoinmentBooking = () => {
 
     // Step 2 States
     const [selectedDate, setSelectedDate] = useState('');
-    const [availableTimeBlocks, setAvailableTimeBlocks] = useState([]); // ✅ เปลี่ยนชื่อ state ให้ชัดเจนขึ้น
+    const [availableTimeBlocks, setAvailableTimeBlocks] = useState([]);
     const [selectedTimeBlock, setSelectedTimeBlock] = useState(null); 
     const [selectedSlot, setSelectedSlot] = useState(null); // stores the actual ers_id
     const [showConfirmPopup, setShowConfirmPopup] = useState(false);
@@ -216,17 +216,17 @@ const AppoinmentBooking = () => {
             case 1: // Select Service
                 return (
                     <>
-                        <h3 className="text-2xl font-semibold text-primary-default mb-6">1. เลือกบริการที่คุณต้องการ</h3>
-                        <div className="grid gap-8">
+                        <h3 className="text-xl sm:text-2xl font-semibold text-primary-default mb-4 sm:mb-6">1. เลือกบริการที่คุณต้องการ</h3>
+                        <div className="grid gap-4 sm:gap-6 lg:gap-8">
                             {services.length > 0 ? (
                                 services.map(service => (
                                     <div 
                                         key={service.service_id} 
-                                        className={`bg-white rounded-xl p-6 border-2 transition-all duration-300
+                                        className={`bg-white rounded-xl p-4 sm:p-6 border-2 transition-all duration-300
                                             ${selectedService && selectedService.service_id === service.service_id ? 'border-stromboli-400' : 'border-gray-200 hover:border-stromboli-300'}`}
                                     >
-                                        <div className="flex justify-between items-start mb-4 gap-6">
-                                            <div className="flex-shrink-0 mr-4 w-56">
+                                        <div className="flex flex-col sm:flex-row justify-between items-start mb-4 gap-4">
+                                            <div className="flex-shrink-0 w-full sm:w-40 md:w-56">
                                                 <img 
                                                     src={`../../assets/${service.img_path}`}
                                                     alt={service.service_name} 
@@ -234,17 +234,21 @@ const AppoinmentBooking = () => {
                                                     onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/80x80/cccccc/ffffff?text=No+Img" }}
                                                 />
                                             </div>
-                                            <div className="flex-grow">
-                                                <h4 className="text-xl font-bold text-primary-default">{service.service_name}</h4>
-                                                <p className="text-sm text-gray-600 mb-2">{service.description}</p>
-                                                <p className="text-lg font-bold text-secondary-default">{service.price} THB</p>
+                                            <div className="flex-grow w-full sm:w-auto">
+                                                <div className="flex justify-between items-start">
+                                                    <div className="flex-grow">
+                                                        <h4 className="text-lg sm:text-xl font-bold text-primary-default">{service.service_name}</h4>
+                                                        <p className="text-sm text-gray-600 mb-2 line-clamp-2 sm:line-clamp-none">{service.description}</p>
+                                                        <p className="text-lg font-bold text-secondary-default">{service.price} THB</p>
+                                                    </div>
+                                                    <button 
+                                                        onClick={() => setExpandedServiceId(expandedServiceId === service.service_id ? null : service.service_id)}
+                                                        className="p-2 rounded-full text-gray-500 hover:bg-gray-200 ml-2 flex-shrink-0"
+                                                    >
+                                                        {expandedServiceId === service.service_id ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <button 
-                                                onClick={() => setExpandedServiceId(expandedServiceId === service.service_id ? null : service.service_id)}
-                                                className="p-2 rounded-full text-gray-500 hover:bg-gray-200"
-                                            >
-                                                {expandedServiceId === service.service_id ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
-                                            </button>
                                         </div>
                                         {expandedServiceId === service.service_id && (
                                             <div className="mt-4 pt-4 border-t border-gray-200">
@@ -275,11 +279,12 @@ const AppoinmentBooking = () => {
                                 <p className="col-span-full text-center text-gray-500">ไม่พบข้อมูลบริการ</p>
                             )}
                         </div>
-                        <div className="flex justify-end mt-8">
+                        <div className="flex justify-end mt-6 sm:mt-8">
                             <Button 
                                 variant="primary" 
                                 onClick={handleNextStep} 
                                 disabled={!selectedService || !symptoms.trim()}
+                                className="w-full sm:w-auto"
                             >
                                 ถัดไป <span className="ml-2">&rarr;</span>
                             </Button>
@@ -290,14 +295,14 @@ const AppoinmentBooking = () => {
             case 2: // Select Date and Time
                 return (
                     <>
-                        <h3 className="text-2xl font-semibold text-primary-default mb-6">2. เลือกวันและเวลาสำหรับ "{selectedService?.service_name}"</h3>
+                        <h3 className="text-xl sm:text-2xl font-semibold text-primary-default mb-4 sm:mb-6">2. เลือกวันและเวลาสำหรับ "{selectedService?.service_name}"</h3>
                         
                         <div className="mb-6">
                             <label htmlFor="appointmentDate" className="block text-gray-700 text-sm font-semibold mb-2">เลือกวันนัดหมาย:</label>
                             <input
                                 type="date"
                                 id="appointmentDate"
-                                className="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition duration-200"
+                                className="shadow-sm appearance-none border rounded w-full py-3 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition duration-200"
                                 value={selectedDate}
                                 onChange={(e) => setSelectedDate(e.target.value)}
                                 min={new Date().toISOString().split('T')[0]} // Cannot select past dates
@@ -306,34 +311,35 @@ const AppoinmentBooking = () => {
 
                         {selectedDate && availableTimeBlocks.length > 0 ? (
                             <div className="mb-6">
-                                <h4 className="text-lg font-semibold text-primary-default mb-4">Slot เวลาที่ว่างสำหรับ {getFormattedDate(selectedDate)}:</h4>
-                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                <h4 className="text-base sm:text-lg font-semibold text-primary-default mb-3 sm:mb-4">Slot เวลาที่ว่างสำหรับ {getFormattedDate(selectedDate)}:</h4>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                                     {availableTimeBlocks.map(block => (
                                         console.log('Available time block:', block),
                                         <button
                                             key={`${block.slot_start}-${block.slot_end}`}
                                             onClick={() => handleTimeBlockSelect(block)} 
-                                            className={`p-3 rounded-lg border-2 text-center transition-all duration-200
-                                                ${selectedTimeBlock?.slot_start === block.slot_start && selectedTimeBlock?.slot_end === block.slot_end ? 'bg-secondary-default text-secondary-dark shadow-lg' : 'bg-white text-gray-800 border-gray-300 hover:bg-secondary-light hover:text-secondary-default'}`}
+                                            className={`p-3 sm:p-4 rounded-lg border-2 text-center transition-all duration-200 min-h-[80px] flex flex-col justify-center
+                                                ${selectedTimeBlock?.slot_start === block.slot_start && selectedTimeBlock?.slot_end === block.slot_end ? 'bg-secondary-default text-white border-secondary-default shadow-lg' : 'bg-white text-gray-800 border-gray-300 hover:bg-secondary-light hover:border-secondary-default'}`}
                                         >
-                                            <span className="font-medium text-lg">{block.slot_start.slice(0, 5)} - {block.slot_end.slice(0, 5)}</span>
-                                            <span className="block text-sm">ว่าง: {block.total_available_slots_in_time_block} คิว</span> 
+                                            <span className="font-medium text-base sm:text-lg block">{block.slot_start.slice(0, 5)} - {block.slot_end.slice(0, 5)}</span>
+                                            <span className="text-xs sm:text-sm mt-1">ว่าง: {block.total_available_slots_in_time_block} คิว</span> 
                                         </button>
                                     ))}
                                 </div>
                             </div>
                         ) : selectedDate && !loading && (
-                            <p className="text-center text-gray-500 mb-6">ไม่มี Slot เวลาที่ว่างสำหรับบริการ "{selectedService?.service_name}" ในวันที่ {getFormattedDate(selectedDate)}</p>
+                            <p className="text-center text-gray-500 mb-6 text-sm sm:text-base">ไม่มี Slot เวลาที่ว่างสำหรับบริการ "{selectedService?.service_name}" ในวันที่ {getFormattedDate(selectedDate)}</p>
                         )}
 
-                        <div className="flex justify-between mt-8">
-                            <Button variant="secondary" onClick={handlePrevStep}>
+                        <div className="flex flex-col sm:flex-row justify-between gap-3 mt-6 sm:mt-8">
+                            <Button variant="secondary" onClick={handlePrevStep} className="w-full sm:w-auto order-2 sm:order-1">
                                 &larr; ย้อนกลับ
                             </Button>
                             <Button 
                                 variant="primary" 
                                 onClick={handleNextStep} 
                                 disabled={!selectedDate || !selectedTimeBlock}
+                                className="w-full sm:w-auto order-1 sm:order-2"
                             >
                                 ถัดไป <span className="ml-2">&rarr;</span>
                             </Button>
@@ -342,17 +348,19 @@ const AppoinmentBooking = () => {
                 );
             case 3: // Waiting for Approval
                 return (
-                    <div className="text-center bg-white p-8 rounded-xl shadow-lg">
-                        <CheckCircle size={80} className="text-green-500 mx-auto mb-6" />
-                        <h3 className="text-3xl font-bold text-gray-800 mb-4">นัดหมายสำเร็จ!</h3>
-                        <p className="text-gray-600 mb-6">นัดหมายของคุณกำลังรอการตอบกลับจากพยาบาล</p>
+                    <div className="text-center bg-white p-6 sm:p-8 rounded-xl shadow-lg">
+                        <CheckCircle size={60} className="text-green-500 mx-auto mb-4 sm:mb-6 sm:w-20 sm:h-20" />
+                        <h3 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-3 sm:mb-4">นัดหมายสำเร็จ!</h3>
+                        <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">นัดหมายของคุณกำลังรอการตอบกลับจากพยาบาล</p>
                         {finalBookingDetails && (
-                            <div className="bg-stromboli-50 p-4 rounded-lg text-left mb-6">
-                                <h4 className="font-semibold text-lg text-secondary-default mb-2">รายละเอียดนัดหมายของคุณ:</h4>
-                                <p><span className="font-medium">บริการ:</span> {finalBookingDetails.serviceName}</p>
-                                <p><span className="font-medium">วันนัด:</span> {getFormattedDate(finalBookingDetails.appointmentDate)}</p>
-                                <p><span className="font-medium">เวลา:</span> {finalBookingDetails.appointmentTime.slice(0,5)} - {finalBookingDetails.slotEnd.slice(0,5)} น.</p>
-                                <p><span className="font-medium">อาการเบื้องต้น:</span> {finalBookingDetails.symptoms}</p>
+                            <div className="bg-stromboli-50 p-4 rounded-lg text-left mb-4 sm:mb-6">
+                                <h4 className="font-semibold text-base sm:text-lg text-secondary-default mb-2">รายละเอียดนัดหมายของคุณ:</h4>
+                                <div className="space-y-1 text-sm sm:text-base">
+                                    <p><span className="font-medium">บริการ:</span> {finalBookingDetails.serviceName}</p>
+                                    <p><span className="font-medium">วันนัด:</span> {getFormattedDate(finalBookingDetails.appointmentDate)}</p>
+                                    <p><span className="font-medium">เวลา:</span> {finalBookingDetails.appointmentTime.slice(0,5)} - {finalBookingDetails.slotEnd.slice(0,5)} น.</p>
+                                    <p><span className="font-medium">อาการเบื้องต้น:</span> {finalBookingDetails.symptoms}</p>
+                                </div>
                             </div>
                         )}
                         <Button 
@@ -360,7 +368,7 @@ const AppoinmentBooking = () => {
                             onClick={navigateToMyAppointments} 
                             className="w-full sm:w-auto"
                         >
-                            <CalendarDays size={20} className="inline-block mr-2" />
+                            <CalendarDays size={18} className="inline-block mr-2" />
                             ดูนัดหมายของฉัน
                         </Button>
                     </div>
@@ -371,29 +379,32 @@ const AppoinmentBooking = () => {
     };
 
     return (
-        <div className='flex flex-col items-center min-h-screen p-4 pt-10'>
-            <h2 className="text-4xl font-extrabold text-primary-default mb-8">สร้างนัดหมายของคุณ</h2>
-            
-            {/* Progress Indicators */}
-            <div className="flex justify-between items-center w-full max-w-2xl mb-10">
-                <div className={`flex flex-col items-center flex-1 ${step >= 1 ? 'text-primary-default' : 'text-gray-400'}`}>
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${step >= 1 ? 'bg-primary-default' : 'bg-stromboli-100'}`}>1</div>
-                    <span className="mt-2 text-sm text-center">เลือกบริการ</span>
+        <div className='flex flex-col items-center min-h-screen px-4 sm:px-6 lg:px-8 py-6 sm:py-10 mt-24 sm:mt-24'>
+            <div className="w-full max-w-4xl">
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-primary-default mb-6 sm:mb-8 text-center">สร้างนัดหมายของคุณ</h2>
+                
+                {/* Progress Indicators */}
+                <div className="flex justify-between items-center w-full mt-10 mb-6 sm:mb-10">
+                    <div className={`flex flex-col items-center flex-1 ${step >= 1 ? 'text-primary-default' : 'text-gray-400'}`}>
+                        <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-white text-sm sm:text-base ${step >= 1 ? 'bg-primary-default' : 'bg-stromboli-100'}`}>1</div>
+                        <span className="mt-2 text-xs sm:text-sm text-center px-1">เลือกบริการ</span>
+                    </div>
+                    <div className="flex-1 border-b-2 border-gray-300 mx-1 sm:mx-2" style={{marginTop: '1rem'}}></div>
+                    <div className={`flex flex-col items-center flex-1 ${step >= 2 ? 'text-primary-default' : 'text-gray-400'}`}>
+                        <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-white text-sm sm:text-base ${step >= 2 ? 'bg-primary-default' : 'bg-stromboli-100'}`}>2</div>
+                        <span className="mt-2 text-xs sm:text-sm text-center px-1">เลือกวันและเวลา</span>
+                    </div>
+                    <div className="flex-1 border-b-2 border-gray-300 mx-1 sm:mx-2" style={{marginTop: '1rem'}}></div>
+                    <div className={`flex flex-col items-center flex-1 ${step >= 3 ? 'text-primary-default' : 'text-gray-400'}`}>
+                        <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-white text-sm sm:text-base ${step >= 3 ? 'bg-primary-default' : 'bg-stromboli-100'}`}>3</div>
+                        <span className="mt-2 text-xs sm:text-sm text-center px-1">รอการตอบกลับ</span>
+                    </div>
                 </div>
-                <div className="flex-1 border-b-2 border-gray-300 mt-5"></div>
-                <div className={`flex flex-col items-center flex-1 ${step >= 2 ? 'text-primary-default' : 'text-gray-400'}`}>
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${step >= 2 ? 'bg-primary-default' : 'bg-stromboli-100'}`}>2</div>
-                    <span className="mt-2 text-sm text-center">เลือกวันและเวลา</span>
+                
+                {/* Content */}
+                <div className="bg-white p-4 sm:p-6 lg:p-8 w-full min-h-[400px] sm:min-h-[500px] rounded-lg shadow-sm">
+                    {renderStepContent()}
                 </div>
-                <div className="flex-1 border-b-2 border-gray-300 mt-5"></div>
-                <div className={`flex flex-col items-center flex-1 ${step >= 3 ? 'text-primary-default' : 'text-gray-400'}`}>
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${step >= 3 ? 'bg-primary-default' : 'bg-stromboli-100'}`}>3</div>
-                    <span className="mt-2 text-sm text-center">รอการตอบกลับ</span>
-                </div>
-            </div>
-            {/* Content */}
-            <div className="bg-white p-8 w-full max-w-4xl min-h-[500px]">
-                {renderStepContent()}
             </div>
 
             {/* Confirmation Modal */}
@@ -402,20 +413,22 @@ const AppoinmentBooking = () => {
                 onClose={handleCancelBookingPopup}
                 title="ยืนยันการจองนัดหมาย"
             >
-                <div className="p-4">
-                    <p className="mb-4 text-gray-700">คุณต้องการยืนยันการจองนัดหมายนี้หรือไม่?</p>
+                <div className="p-3 sm:p-4">
+                    <p className="mb-4 text-gray-700 text-sm sm:text-base">คุณต้องการยืนยันการจองนัดหมายนี้หรือไม่?</p>
                     {finalBookingDetails && (
-                        <div className="bg-stromboli-50 p-4 rounded-lg text-left text-gray-800">
-                            <h4 className="font-semibold text-lg text-secondary-default mb-2">รายละเอียด:</h4>
-                            <p><span className="font-medium">บริการ:</span> {finalBookingDetails.serviceName}</p>
-                            <p><span className="font-medium">วันนัด:</span> {getFormattedDate(finalBookingDetails.appointmentDate)}</p>
-                            <p><span className="font-medium">เวลา:</span> {finalBookingDetails.appointmentTime.slice(0,5)} - {finalBookingDetails.slotEnd.slice(0,5)} น.</p>
-                            <p><span className="font-medium">อาการเบื้องต้น:</span> {finalBookingDetails.symptoms}</p>
+                        <div className="bg-stromboli-50 p-3 sm:p-4 rounded-lg text-left text-gray-800">
+                            <h4 className="font-semibold text-base sm:text-lg text-secondary-default mb-2">รายละเอียด:</h4>
+                            <div className="space-y-1 text-sm sm:text-base">
+                                <p><span className="font-medium">บริการ:</span> {finalBookingDetails.serviceName}</p>
+                                <p><span className="font-medium">วันนัด:</span> {getFormattedDate(finalBookingDetails.appointmentDate)}</p>
+                                <p><span className="font-medium">เวลา:</span> {finalBookingDetails.appointmentTime.slice(0,5)} - {finalBookingDetails.slotEnd.slice(0,5)} น.</p>
+                                <p><span className="font-medium">อาการเบื้องต้น:</span> {finalBookingDetails.symptoms}</p>
+                            </div>
                         </div>
                     )}
-                    <div className="flex justify-end gap-3 mt-6">
-                        <Button variant="secondary" onClick={handleCancelBookingPopup}>ยกเลิก</Button>
-                        <Button variant="success" onClick={handleConfirmBooking}>ยืนยันการจอง</Button>
+                    <div className="flex flex-col sm:flex-row justify-end gap-3 mt-4 sm:mt-6">
+                        <Button variant="secondary" onClick={handleCancelBookingPopup} className="w-full sm:w-auto order-2 sm:order-1">ยกเลิก</Button>
+                        <Button variant="success" onClick={handleConfirmBooking} className="w-full sm:w-auto order-1 sm:order-2">ยืนยันการจอง</Button>
                     </div>
                 </div>
             </Popup>

@@ -1,3 +1,5 @@
+// frontend/components/common/Button.js
+
 const Button = ({
   children,
   onClick,

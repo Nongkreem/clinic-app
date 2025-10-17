@@ -1,5 +1,5 @@
 const Doctor = require('../models/Doctor');
-
+const Appointment = require('../models/Appointment');
 
 exports.createDoctor = async (req, res) => {
     console.log('Received req body: ', req.body)
@@ -10,6 +10,10 @@ exports.createDoctor = async (req, res) => {
   if (doctor_id.length !== 6 || !/^D\d{5}$/.test(doctor_id)) {
     return res.status(400).json({ message: 'รหัสประจำตัวแพทย์ต้องขึ้นต้นด้วย D และตามด้วยตัวเลข 5 หลัก' });
   }
+  if (!email.endsWith('@vejnaree.ac.th')) {
+  return res.status(400).json({ message: 'อีเมลต้องลงท้ายด้วย @vejnaree.ac.th เท่านั้น' });
+}
+
 
   try {
     const newDoctor = await Doctor.createDoctor({ doctor_id, full_name, phone_number, email, service_ids });
@@ -35,11 +39,6 @@ exports.getAllDoctors = async (req, res) => {
   }
 };
 
-/**
- * อัปเดตข้อมูลแพทย์
- * @param {Object} req - Request object
- * @param {Object} res - Response object
- */
 exports.updateDoctor = async (req, res) => {
   const { id } = req.params; // doctor_id
   const { full_name, phone_number, email, service_ids } = req.body;
@@ -60,11 +59,6 @@ exports.updateDoctor = async (req, res) => {
   }
 };
 
-/**
- * ลบข้อมูลแพทย์
- * @param {Object} req - Request object
- * @param {Object} res - Response object
- */
 exports.deleteDoctor = async (req, res) => {
   const { id } = req.params; // doctor_id
   try {
@@ -76,7 +70,19 @@ exports.deleteDoctor = async (req, res) => {
     }
   } catch (error) {
     console.error('Error in deleteDoctor controller:', error);
-    res.status(500).json({ message: 'เกิดข้อผิดพลาดในการลบข้อมูลแพทย์' });
+    
+    // ตรวจสอบข้อความ error จาก model
+    if (
+      error.message.includes("ไม่สามาถลบแพทย์ได้") ||
+      error.message.includes("เนื่องจากมีประวัติการนัดหมายในระบบ")
+    ) 
+    {
+      return res.status(400).json({ message: error.message }); // ส่งข้อความจริงไปยัง FE
+    }
+
+    return res
+      .status(500)
+      .json({ message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์ กรุณาลองใหม่อีกครั้ง" });
   }
 };
 
@@ -88,5 +94,51 @@ exports.getDoctorsByService = async (req, res) => {
   } catch (error) {
     console.error('Error in getDoctorsByService controller:', error);
     res.status(500).json({ message: 'ไม่สามารถดึงข้อมูลแพทย์ตามบริการได้' });
+  }
+};
+
+exports.getPrecheckedAppointmentsForToday = async (req, res) => {
+  try {
+    const doctorId = req.user.entity_id; 
+    const rows = await Appointment.getDoctorPrecheckedAppointmentsForToday(doctorId);
+    return res.status(200).json(rows);
+  } catch (err) {
+    console.error('getPrecheckedAppointmentsForToday error:', err);
+    return res.status(500).json({ message: 'ไม่สามารถดึงข้อมูลนัดหมายได้' });
+  }
+};
+
+exports.createFollowUpAppointment = async (req, res) => {
+  const { previous_appointment_id, ers_id, appointment_date, appointment_time } = req.body;
+  const doctor_id = req.user.entity_id;
+
+  try {
+    const result = await Appointment.createFollowUp({
+      previous_appointment_id,
+      ers_id,
+      doctor_id,
+      appointment_date,
+      appointment_time
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'สร้างนัดติดตามอาการสำเร็จ',
+      appointment_id: result.appointment_id
+    });
+  } catch (error) {
+    console.error('[DoctorController] createFollowUpAppointment error:', error);
+    res.status(500).json({ success: false, message: error.message || 'เกิดข้อผิดพลาดในการสร้างนัดติดตามอาการ' });
+  }
+};
+
+exports.getCompletedAppointmentsForToday = async (req, res) => {
+  try {
+    const doctorId = req.user.entity_id; // จาก token
+    const result = await Doctor.getDoctorCompletedAppointmentsForToday(doctorId);
+    res.json(result);
+  } catch (err) {
+    console.error("getCompletedAppointmentsForToday error:", err);
+    res.status(500).json({ message: "เกิดข้อผิดพลาดในการดึงข้อมูลนัดหมายที่ตรวจเสร็จแล้ว" });
   }
 };

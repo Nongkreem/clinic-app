@@ -8,4 +8,7 @@ const { authorizeRole } = require('../middleware/authorization');
 // และปิดนัดเป็น complete
 router.post('/', authenticateToken, authorizeRole(['doctor']), medicalRecordController.createFromAppointment);
 
+// อัปเดต record (อนุญาตแก้ diagnosis/treatment/note/follow_up_date)
+router.put('/:record_id', authenticateToken, authorizeRole(['doctor']), medicalRecordController.updateRecord);
+
 module.exports = router;

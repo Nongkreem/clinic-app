@@ -427,12 +427,14 @@ exports.completeAppointment = async (appointmentId, patientId) => {
 };
 
 exports.getApprovedCheckedInAppointments = async (serviceId) => {
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Bangkok" });
   const [rows] = await db.execute(
     `SELECT
         a.appointment_id,
         a.appointment_date,
         a.appointment_time,
         a.status,
+        a.appointmentType,
         a.confirmCheckInTime,
         a.symptoms,
         p.patient_id,
@@ -453,8 +455,117 @@ exports.getApprovedCheckedInAppointments = async (serviceId) => {
      WHERE a.status = 'confirmed'
        AND a.confirmCheckInTime IS NOT NULL
        AND a.service_id = ?
+       AND a.appointment_date = ? 
+       AND a.appointmentType IN ('patient_booking', 'doctor_follow_up')
      ORDER BY a.appointment_date, a.appointment_time`,
-    [serviceId]
+    [serviceId, today]
   );
   return rows;
+};
+
+exports.getDoctorPrecheckedAppointmentsForToday = async (doctorId) => {
+  // ดึงนัดของหมอวันนี้ ที่สถานะ 'prechecked'
+  // รวม patient, service, room และ precheck ล่าสุด
+
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Bangkok" });
+
+  const [rows] = await db.execute(
+    `
+    SELECT
+      a.appointment_id,
+      a.appointment_date,
+      a.appointment_time,
+      a.status,
+      a.symptoms,
+
+      p.patient_id,
+      p.hn,
+      p.first_name AS patient_first_name,
+      p.last_name AS patient_last_name,
+
+      s.service_id,
+      s.service_name,
+      er.room_id,
+      er.room_name,
+
+      pr.precheck_id,
+      pr.blood_pressure,
+      pr.heart_rate,
+      pr.temperature,
+      pr.weight,
+      pr.height,
+      pr.other_notes
+
+    FROM appointment a
+    JOIN patient p       ON a.patient_id = p.patient_id
+    JOIN services s      ON a.service_id = s.service_id
+    JOIN examRoom er     ON a.room_id = er.room_id
+    LEFT JOIN patient_precheck pr
+           ON pr.appointment_id = a.appointment_id
+    WHERE a.status = 'prechecked'
+      AND a.doctor_id = ?
+      AND a.appointment_date = ?
+      AND a.appointmentType IN ('patient_booking', 'doctor_follow_up')
+    ORDER BY a.appointment_time ASC
+    `,
+    [doctorId, today]
+  );
+  return rows;
+};
+
+
+exports.createFollowUp = async ({ previous_appointment_id, ers_id, doctor_id, appointment_date, appointment_time }) => {
+  const conn = await db.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    // ดึง patient จากนัดเดิม
+    const [[oldAppt]] = await conn.execute(
+      `SELECT patient_id FROM appointment WHERE appointment_id = ?`,
+      [previous_appointment_id]
+    );
+    if (!oldAppt) throw new Error('ไม่พบนัดหมายเดิม');
+
+    // ดึงข้อมูล slot ที่เลือก
+    const [[slot]] = await conn.execute(
+      `SELECT ers.ers_id, ers.ds_id, ds.service_id, ds.room_id
+       FROM examRoomSlots ers
+       JOIN doctorSchedules ds ON ers.ds_id = ds.ds_id
+       WHERE ers.ers_id = ? AND ers.is_booked = 0`,
+      [ers_id]
+    );
+    if (!slot) throw new Error('slot นี้ถูกจองไปแล้ว หรือไม่พบข้อมูล slot');
+
+    // เพิ่ม appointment
+    const [insert] = await conn.execute(
+      `INSERT INTO appointment (
+        ers_id, ds_id, patient_id, doctor_id, service_id, room_id,
+        appointment_date, appointment_time, appointmentType, status
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'doctor_follow_up', 'approved')`,
+      [
+        slot.ers_id,
+        slot.ds_id,
+        oldAppt.patient_id,
+        doctor_id,
+        slot.service_id,
+        slot.room_id,
+        appointment_date,
+        appointment_time
+      ]
+    );
+
+    // อัปเดต slot เป็น booked
+    await conn.execute(`UPDATE examRoomSlots SET is_booked = 1, updated_at = NOW() WHERE ers_id = ?`, [slot.ers_id]);
+
+    await conn.commit();
+    return { success: true, appointment_id: insert.insertId };
+
+  } catch (error) {
+    await conn.rollback();
+    console.error('[Appointment Model] createFollowUp error:', error);
+    throw error;
+  } finally {
+    conn.release();
+  }
 };

@@ -289,9 +289,22 @@ exports.deleteSchedule = async (ds_id) => {
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
+    
+    const [[apptCheck]] = await connection.execute(
+      `SELECT COUNT(*) AS count
+       FROM appointment
+       WHERE ds_id = ?`,
+      [ds_id]
+    );
 
+    if (apptCheck.count > 0) {
+      throw new Error(
+        'ไม่สามารถลบตารางออกตรวจได้ เนื่องจากมีการนัดหมายของแพทย์ในตารางนี้'
+      );
+    }
+    
     const [result] = await connection.execute(
-      "DELETE FROM doctorSchedules WHERE ds_id = ?",
+      'DELETE FROM doctorSchedules WHERE ds_id = ?',
       [ds_id]
     );
 

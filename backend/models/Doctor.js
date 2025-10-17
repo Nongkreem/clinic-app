@@ -5,6 +5,14 @@ exports.createDoctor = async ({ doctor_id, full_name, phone_number, email, servi
   try {
     await connection.beginTransaction();
 
+    const [[apptCheck]] = await connection.execute(
+      'SELECT COUNT(*) AS count FROM appointment WHERE doctor_id = ?',
+      [doctor_id]
+    );
+    if (apptCheck.count > 0) {
+      throw new Error('ไม่สามารถลบแพทย์ได้ เนื่องจากมีประวัติการนัดหมายในระบบ');
+    }
+    
     // 1. Insert into doctors table
     const [doctorResult] = await connection.execute(
       'INSERT INTO doctors (doctor_id, full_name, phone_number, email) VALUES (?, ?, ?, ?)',
@@ -36,7 +44,7 @@ exports.getAllDoctors = async () => {
   try {
     // ดึงแพทย์ทั้งหมด
     const [doctors] = await db.execute(
-      'SELECT d.doctor_id, d.full_name, d.phone_number, d.email FROM doctors d ORDER BY d.full_name'
+      'SELECT d.doctor_id, d.full_name, d.phone_number, d.email FROM doctors d WHERE is_active = 1 ORDER BY d.full_name'
     );
 
     // สำหรับแต่ละแพทย์, ดึงบริการที่เกี่ยวข้อง
@@ -57,16 +65,6 @@ exports.getAllDoctors = async () => {
   }
 };
 
-/**
- * อัปเดตข้อมูลแพทย์และบริการที่เกี่ยวข้อง
- * @param {string} doctor_id - ID ของแพทย์ที่ต้องการอัปเดต
- * @param {Object} doctorData - ข้อมูลแพทย์ที่ต้องการอัปเดต
- * @param {string} doctorData.full_name - ชื่อเต็ม
- * @param {string} [doctorData.phone_number] - เบอร์โทรศัพท์ (optional)
- * @param {string} [doctorData.email] - อีเมล (optional)
- * @param {Array<number>} doctorData.service_ids - Array ของ service_id ที่เกี่ยวข้อง
- * @returns {Promise<boolean>} - true ถ้าอัปเดตสำเร็จ, false ถ้าไม่พบ ID
- */
 exports.updateDoctor = async (doctor_id, { full_name, phone_number, email, service_ids }) => {
   const connection = await db.getConnection();
   try {
@@ -101,23 +99,30 @@ exports.updateDoctor = async (doctor_id, { full_name, phone_number, email, servi
   }
 };
 
-/**
- * ลบข้อมูลแพทย์และบริการที่เกี่ยวข้อง
- * @param {string} doctor_id - ID ของแพทย์ที่ต้องการลบ
- * @returns {Promise<boolean>} - true ถ้าลบสำเร็จ, false ถ้าไม่พบ ID
- */
+
 exports.deleteDoctor = async (doctor_id) => {
   const connection = await db.getConnection();
   console.log('Delete doctor id : ', doctor_id)
   try {
     await connection.beginTransaction();
 
-    // 1. Delete doctor from all table has delete cascade
+    // ตรวจสอบก่อนว่ามี appointment อยู่หรือไม่
+    const [[apptCheck]] = await connection.execute(
+      'SELECT COUNT(*) AS count FROM appointment WHERE doctor_id = ?',
+      [doctor_id]
+    );
+    if (apptCheck.count > 0) {
+      throw new Error('ไม่สามารถลบแพทย์ได้ เนื่องจากมีประวัติการนัดหมายในระบบ');
+    }
+
+    // 1. ลบข้อมูลลูกที่สามารถลบได้
     await connection.execute('DELETE FROM doctorService WHERE doctor_id = ?', [doctor_id]);
-     
-    await connection.execute('DELETE FROM doctorSchedules WHERE doctor_id = ?', [doctor_id]);
-    // 2. Delete from doctors table
-    const [result] = await connection.execute('DELETE FROM doctors WHERE doctor_id = ?', [doctor_id]);
+    
+    // 2. เปลี่ยนสถานะของหมอเป็น inactive
+    const [result] = await connection.execute(
+      'UPDATE doctors SET is_active = 0 WHERE doctor_id = ?',
+      [doctor_id]
+    );
 
     await connection.commit();
     return result.affectedRows > 0;
@@ -145,4 +150,52 @@ exports.getDoctorsByService = async (serviceId) => {
     console.error('Error fetching doctors by service:', error);
     throw error;
   }
+};
+
+
+exports.getDoctorCompletedAppointmentsForToday = async (doctorId) => {
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Bangkok" });
+
+  const [rows] = await db.execute(
+    `
+    SELECT
+      a.appointment_id,
+      a.appointment_date,
+      a.appointment_time,
+      a.status,
+      a.symptoms,
+
+      p.patient_id,
+      p.hn,
+      p.first_name AS patient_first_name,
+      p.last_name AS patient_last_name,
+
+      s.service_id,
+      s.service_name,
+      er.room_id,
+      er.room_name,
+
+      pr.precheck_id,
+      pr.blood_pressure,
+      pr.heart_rate,
+      pr.temperature,
+      pr.weight,
+      pr.height,
+      pr.other_notes
+
+    FROM appointment a
+    JOIN patient p       ON a.patient_id = p.patient_id
+    JOIN services s      ON a.service_id = s.service_id
+    JOIN examRoom er     ON a.room_id = er.room_id
+    LEFT JOIN patient_precheck pr
+           ON pr.appointment_id = a.appointment_id
+    WHERE a.status = 'completed'
+      AND a.doctor_id = ?
+      AND a.appointment_date = ?
+      AND a.appointmentType IN ('patient_booking', 'doctor_follow_up')
+    ORDER BY a.appointment_time ASC
+    `,
+    [doctorId, today]
+  );
+  return rows;
 };

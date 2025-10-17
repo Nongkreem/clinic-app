@@ -6,7 +6,7 @@ require("dotenv").config();
 
 // ช่วยเช็คว่าเป็น email โรงพยาบาลมั้ย
 const isHospitalEmail = (email) => {
-  return email.endsWith("@hospital.com");
+  return email.endsWith("@vejnaree.ac.th");
 };
 
 exports.register = async (req, res) => {
@@ -88,6 +88,8 @@ exports.register = async (req, res) => {
 
 exports.login = async (req, res) => {
   const { email, password } = req.body;
+
+  console.log("Login payload:", email, password);
 
   if (!email || !password) {
     return res.status(400).json({ message: "กรุณากรอกอีเมลและรหัสผ่าน" });

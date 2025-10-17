@@ -10,4 +10,5 @@ router.post('/', authenticateToken, authorizeRole(['head_nurse']), nurseControll
 // Route สำหรับดึงข้อมูลพยาบาลทั้งหมด
 router.get('/', authenticateToken, authorizeRole(['nurse', 'head_nurse']), nurseController.getAllNurses);
 
+router.delete('/:id', authenticateToken, authorizeRole(['nurse', 'head_nurse']), nurseController.deleteNurse);
 module.exports = router;

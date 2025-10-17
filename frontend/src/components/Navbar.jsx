@@ -1,56 +1,150 @@
-import React from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
-import Button from './common/Button';
-import { useAuth } from '../context/AuthContext';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Home,
+  CalendarPlus,
+  ClipboardList,
+  CalendarDays,
+} from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+
 const Navbar = () => {
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
+  const [activeMenu, setActiveMenu] = useState("home");
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
-
-  const getDashboardLink = () => {
-    switch (user?.role) {
-      case 'patient': return '/patient-dashboard';
-      case 'doctor': return '/doctor-dashboard';
-      case 'nurse': return '/nurse-dashboard';
-      case 'head_nurse': return '/head-nurse-dashboard';
-      default: return '/';
+  // ฟังก์ชันจัดการลิงก์ตามสถานะล็อกอิน
+  const handleNavigate = (id, path) => {
+    setActiveMenu(id);
+    if (!isAuthenticated) {
+      navigate("/login");
+    } else {
+      // ถ้าเป็นเมนู "หน้าหลัก" และล็อกอินแล้ว ให้ไป /patient/home
+      if (id === "home") {
+        navigate("/patient/home");
+      } else {
+        navigate(path);
+      }
     }
   };
 
+  // ✅ เมนูหลัก (ใช้ทั้ง Desktop & Mobile)
+  const menuItems = [
+    {
+      id: "home",
+      label: "หน้าหลัก",
+      icon: <Home size={20} />,
+      path: "/", // เส้นทางทั่วไป ถ้าล็อกอินจะ override เป็น /patient/home
+    },
+    {
+      id: "create",
+      label: "สร้างนัดหมาย",
+      icon: <CalendarPlus size={20} />,
+      path: "/patient/create-appointment",
+    },
+    {
+      id: "assessment",
+      label: "ทำแบบประเมิน",
+      icon: <ClipboardList size={20} />,
+      path: "/patient/assessment",
+    },
+    {
+      id: "my-appointment",
+      label: "นัดหมายของฉัน",
+      icon: <CalendarDays size={20} />,
+      path: "/patient/my-appointment",
+    },
+  ];
+
   return (
-    <div className='flex items-center justify-between text-sm py-4 mb-5 border-b border-b-gray-400'>
-      <div onClick={()=>navigate('/')} className='cursor-pointer'>LOGO</div>
-
-      <ul className='list-none flex items-center gap-8'>
-        <NavLink to='/'><li className='py-1'>หน้าหลัก</li></NavLink>
-        <NavLink to='/about'><li className='py-1'>เกี่ยวกับเรา</li></NavLink>
-        <NavLink to='/services'><li className='py-1'>บริการของเรา</li></NavLink>
-      </ul>
-
-      {/* ขวาสุด */}
-      {!isAuthenticated ? (
-        <Button onClick={() => navigate('/login')} className='bg-primary text-white rounded-full px-8 py-3 font-light'>
-          เข้าสู่ระบบ
-        </Button>
-      ) : (
-        <div className='flex items-center gap-4 cursor-pointer group relative'>
-          <div className='flex items-center justify-center w-10 h-10 rounded-full bg-primary-default'>
-            <p className='text-white'>p</p>
-          </div>
-          <div className='absolute top-0 right-0 pt-14 text-base font-medium text-gray-600 z-20 hidden group-hover:block'>
-            <div className='min-w-48 bg-stone-100 rounded flex flex-col gap-4 p-4'>
-                <p onClick={()=>navigate('/')} className='hover:text-black cursor-pointer'>โปรไฟล์</p>
-                <p onClick={()=>navigate('/patient/my-appointment')} className='hover:text-black cursor-pointer'>นัดหมายของฉัน</p>
-                <p onClick={handleLogout} className='hover:text-black cursor-pointer'>ออกจากระบบ</p>
-            </div>
-          </div>
+    <>
+      {/* 🖥️ Desktop Navbar */}
+      <header className="hidden lg:flex items-center justify-between bg-white fixed top-0 left-0 right-0 z-50 shadow-sm h-[80px] px-10">
+        {/* LOGO */}
+        <div
+          className="flex items-center cursor-pointer"
+          onClick={() => navigate("/landing")}
+        >
+          <img
+            src="/assets/logo.png"
+            alt="Clinic Logo"
+            className="w-[120px] h-auto object-contain"
+          />
         </div>
-      )}
-    </div>
+
+        {/* Menu */}
+        <nav className="flex items-center gap-8 text-gray-700 font-medium">
+          {menuItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => handleNavigate(item.id, item.path)}
+              className={`hover:text-primary-default transition ${
+                activeMenu === item.id ? "text-primary-default" : ""
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
+
+        {/* Profile / Logout */}
+        {isAuthenticated && (
+          <div
+            className="text-gray-500 text-sm hover:text-red-500 cursor-pointer"
+            onClick={() => {
+              logout();
+              navigate("/landing");
+            }}
+          >
+            ออกจากระบบ
+          </div>
+        )}
+      </header>
+
+      {/* Mobile Navbar */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-[60px] flex items-center justify-between px-4 z-50">
+        {/* โลโก้มุมซ้ายบน */}
+        <div
+          className="cursor-pointer flex items-center"
+          onClick={() => navigate("/landing")}
+        >
+          <img
+            src="/assets/logo.png"
+            alt="Clinic Logo"
+            className="w-[100px] h-auto object-contain"
+          />
+        </div>
+
+        {/* ปุ่มออกจากระบบ (ถ้ามี) */}
+        {isAuthenticated && (
+          <button
+            onClick={() => {
+              logout();
+              navigate("/landing");
+            }}
+            className="text-sm text-red-500"
+          >
+            ออก
+          </button>
+        )}
+      </div>
+
+      {/* Bottom Navbar */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-300 shadow-lg flex justify-around py-2">
+        {menuItems.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => handleNavigate(item.id, item.path)}
+            className={`flex flex-col items-center justify-center gap-1 ${
+              activeMenu === item.id ? "text-primary-default" : "text-gray-500"
+            }`}
+          >
+            {item.icon}
+            <span className="text-xs">{item.label}</span>
+          </button>
+        ))}
+      </nav>
+    </>
   );
 };
 

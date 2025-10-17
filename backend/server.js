@@ -3,20 +3,18 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 require('dotenv').config();
 
+const path = require('path');
 const db = require('./config/db');
 
 const app = express();
-const port = process.env.PORT || 5001; // ใช้ PORT จาก .env หรือ 5000 เป็นค่า default
+const port = process.env.PORT || 5001;
 
-// *** ตรวจสอบและตั้งค่า CORS ตรงนี้ ***
-// ควรจะอนุญาตให้ Frontend (localhost:5173) สามารถเรียก API ได้
 const corsOptions = {
   origin: 'http://localhost:5173', // frontend URL
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true
 };
 
-// ✅ เพิ่มบรรทัดนี้ เพื่อให้ Express ตอบ OPTIONS request
 
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
@@ -31,6 +29,11 @@ app.use((req, res, next) => {
 // Middleware
 app.use(bodyParser.json());
 
+
+// ให้เสิร์ฟไฟล์ในโฟลเดอร์ /uploads แบบ static
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+
 // --- Routes ---
 const authRoutes = require('./routes/authRoutes');
 const guideRoutes = require('./routes/guideRoutes')
@@ -43,6 +46,9 @@ const patientRoutes = require('./routes/patientRoutes');
 const nurseRoutes = require('./routes/nurseRoutes');
 const nurseScheduleRoutes = require('./routes/counterTerminalSchedulesRoutes')
 const precheckRoutes = require('./routes/precheckRoutes')
+const medicalRecordRoutes = require('./routes/medicalRecordRoutes')
+const medicalCertificateRoutes = require('./routes/medicalCertificateRoutes')
+const symptomAssessmentRoutses = require('./routes/symptomAssessmentRoutes')
 
 app.use('/api/auth', authRoutes); // กำหนด prefix /api/auth สำหรับ Auth Routes
 app.use('/api/guide', guideRoutes);
@@ -55,7 +61,9 @@ app.use('/api/patients', patientRoutes); // กำหนด prefix /api/patients
 app.use('/api/nurses', nurseRoutes); // กำหนด prefix /api/nurses สำหรับ Nurse Routes
 app.use('/api/nurse-schedules', nurseScheduleRoutes);
 app.use('/api/precheck', precheckRoutes);
-
+app.use('/api/medical-record', medicalRecordRoutes);
+app.use('/api/medical-certificates', medicalCertificateRoutes);
+app.use('/api/symptom-assessment', symptomAssessmentRoutses);
 
 // --- ทดสอบ Protected Route (ต้อง Login ก่อน) ---
 const { authenticateToken } = require('./middleware/authMiddleware');
