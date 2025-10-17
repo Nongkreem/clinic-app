@@ -1,7 +1,9 @@
 // frontend/src/App.jsx
 import React from "react";
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // Layouts
 import TopNavbarLayout from "./layouts/TopNavbarLayout.jsx";
@@ -12,7 +14,7 @@ import Home from "./pages/Landing.jsx";
 import About from "./pages/About";
 import Service from "./pages/Service";
 import Login from "./pages/Login";
-import Register from "./pages/Register"; // เพิ่ม Register Page
+import Register from "./pages/Register";
 
 // Specific Pages for Doctor
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
@@ -27,24 +29,25 @@ import GuideManage from "./pages/head-nurse/GuideManage.jsx";
 import ClinicRoomManage from "./pages/head-nurse/ClinicRoomManage.jsx";
 import DoctorScheduleManage from "./pages/head-nurse/DoctorScheduleManage.jsx";
 import NurseManage from "./pages/head-nurse/NurseManage.jsx";
-import SymptomQuestionManage from "./pages/head-nurse/SymptomQuestionManage.jsx"
+import SymptomQuestionManage from "./pages/head-nurse/SymptomQuestionManage.jsx";
+import NurseScheduleManage from "./pages/head-nurse/NurseScheduleManage.jsx";
+
 // Specific Pages for Patient
 import PatientDashboard from "./pages/patient/PatientDashboard";
 import AppoinmentBooking from "./pages/patient/AppoinmentBooking.jsx";
 import MyAppointment from "./pages/patient/MyAppointment.jsx";
-import PatientHome from "./pages/patient/PatientHome.jsx";
-
-// Specific Pages for Nures
-import NurseDashboard from "./pages/nurse/NurseDashboard";
-import AppointmentReqManage from "./pages/nurse/AppointmentReqManage.jsx";
-import NursePrecheckManage from "./pages/nurse/NursePrecheckManage.jsx";
-// Components
-import Button from "./components/common/Button";
-import NurseScheduleManage from "./pages/head-nurse/NurseScheduleManage.jsx";
 import Landing from "./pages/Landing.jsx";
 import SymptomAssessment from "./pages/patient/SymptomAsessment.jsx";
 
-// omponent สำหรับ Protected Route
+// Specific Pages for Nurse
+import NurseDashboard from "./pages/nurse/NurseDashboard";
+import AppointmentReqManage from "./pages/nurse/AppointmentReqManage.jsx";
+import NursePrecheckManage from "./pages/nurse/NursePrecheckManage.jsx";
+
+// Components
+import Button from "./components/common/Button";
+
+// Component สำหรับ Protected Route
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { isAuthenticated, loading, user } = useAuth();
 
@@ -60,12 +63,10 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   }
 
   if (!isAuthenticated) {
-    // ถ้ายังไม่ได้ Login ให้ redirect ไปหน้า Login
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   if (allowedRoles && !allowedRoles.includes(user?.role)) {
-    // ถ้า Login แล้ว แต่ไม่มีสิทธิ์ ให้ redirect ไปหน้า Unauthorized
     return <Navigate to="/unauthorized" replace />;
   }
 
@@ -73,8 +74,9 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 };
 
 function App() {
+  console.log("App.jsx rendered");
   const { isAuthenticated, loading, user } = useAuth();
-  const location = useLocation();
+  const navigate = useNavigate();
 
   if (loading) {
     return (
@@ -87,29 +89,52 @@ function App() {
     );
   }
 
-  const hideNavbar =
-    location.pathname === "/login" || location.pathname === "/register";
   return (
-    <div className="">
+    <>
+      {console.log("ToastContainer should render")}
+      <ToastContainer
+        position="top-center"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+        style={{ zIndex: 9999 }}
+      />
+
       <Routes>
-        <Route path="login" element={<Login />} />
-        <Route path="register" element={<Register />} />
-        {/* Layout มี navbar */}
+        {/* Public Routes */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+
+        {/* Public Pages with Navbar */}
         <Route element={<TopNavbarLayout />}>
           <Route index element={<Home />} />
-          <Route path="about" element={<About />} />
-          {/* Patient Routes */}
-          <Route path="patient">
-            <Route path="home" element={<PatientHome />} />
-            <Route path="landing" element={<Landing />} />
-            <Route path="create-appointment" element={<AppoinmentBooking />} />
-            <Route path="my-appointment" element={<MyAppointment />} />
-            <Route path="assessment" element={<SymptomAssessment />} />
-
-          </Route>
+          <Route path="/about" element={<About />} />
         </Route>
 
-        {/* Layout สำหรับ Dashboard ของบุคลากร (มี Sidebar) */}
+        {/* Patient Routes - Protected */}
+        <Route
+          element={
+            <ProtectedRoute allowedRoles={["patient"]}>
+              <TopNavbarLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="/patient/landing" element={<Landing />} />
+          <Route
+            path="/patient/create-appointment"
+            element={<AppoinmentBooking />}
+          />
+          <Route path="/patient/my-appointment" element={<MyAppointment />} />
+          <Route path="/patient/assessment" element={<SymptomAssessment />} />
+        </Route>
+
+        {/* Staff Dashboard Layout - Protected */}
         <Route
           element={
             <ProtectedRoute allowedRoles={["doctor", "nurse", "head_nurse"]}>
@@ -117,7 +142,7 @@ function App() {
             </ProtectedRoute>
           }
         >
-          {/* Doctor routes */}
+          {/* Doctor Routes */}
           <Route path="/doctor" element={<DoctorDashboard />}>
             <Route path="diagnosis" element={<DiagnosisPage />} />
             <Route
@@ -126,12 +151,13 @@ function App() {
             />
           </Route>
 
-          {/* Nurse routes */}
+          {/* Nurse Routes */}
           <Route path="/nurse/*" element={<NurseDashboard />}>
-              <Route path="appointment-req" element={<AppointmentReqManage />} />
-              <Route path="precheck" element={<NursePrecheckManage />} />
+            <Route path="appointment-req" element={<AppointmentReqManage />} />
+            <Route path="precheck" element={<NursePrecheckManage />} />
           </Route>
 
+          {/* Head Nurse Routes */}
           <Route path="/head_nurse" element={<HeadNurseDashboard />}>
             <Route path="services" element={<ServiceManage />} />
             <Route path="doctors" element={<DoctorsManage />} />
@@ -140,11 +166,14 @@ function App() {
             <Route path="schedules" element={<DoctorScheduleManage />} />
             <Route path="nurses" element={<NurseManage />} />
             <Route path="nurses-schedules" element={<NurseScheduleManage />} />
-            <Route path="symptom-question" element={<SymptomQuestionManage />} />
+            <Route
+              path="symptom-question"
+              element={<SymptomQuestionManage />}
+            />
           </Route>
         </Route>
 
-        {/* หน้า Unauthorized (ถ้าผู้ใช้ไม่มีสิทธิ์) */}
+        {/* Unauthorized Page */}
         <Route
           path="/unauthorized"
           element={
@@ -156,9 +185,13 @@ function App() {
                 กรุณาติดต่อผู้ดูแลระบบหากคุณคิดว่านี่คือข้อผิดพลาด
               </p>
               <Button
-                onClick={() =>
-                  isAuthenticated ? navigate("/") : navigate("/login")
-                }
+                onClick={() => {
+                  if (isAuthenticated && user?.role) {
+                    navigate(`/${user.role}`);
+                  } else {
+                    navigate("/login");
+                  }
+                }}
                 variant="secondary"
               >
                 {isAuthenticated ? "กลับหน้าหลัก" : "กลับไปหน้า Login"}
@@ -167,21 +200,19 @@ function App() {
           }
         />
 
-        {/* Fallback for unknown routes or redirect authenticated users from root */}
+        {/* Fallback Route */}
         <Route
           path="*"
           element={
-            isAuthenticated ? (
-              // Redirect authenticated users from root to their dashboard
-              <Navigate to={`/${user?.role}`} replace />
+            isAuthenticated && user?.role ? (
+              <Navigate to={`/${user.role}/landing`} replace />
             ) : (
-              // Redirect unauthenticated users to login
               <Navigate to="/login" replace />
             )
           }
         />
       </Routes>
-    </div>
+    </>
   );
 }
 

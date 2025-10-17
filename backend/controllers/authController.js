@@ -55,6 +55,20 @@ exports.register = async (req, res) => {
   }
 
   try {
+
+    // ตรวจสอบว่า HN นี้ถูก blacklist หรือไม่
+    const [existingPatient] = await db.execute(
+      "SELECT is_blacklisted FROM patient WHERE HN = ?",
+      [hn]
+    );
+
+    if (existingPatient.length > 0 && existingPatient[0].is_blacklisted) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "หมายเลข HN นี้ถูกระงับการใช้งาน เนื่องจากยกเลิกนัดเกิน 3 ครั้ง โปรดติดต่อเจ้าหน้าที่เพื่อปลดล็อกบัญชี",
+      });
+    }
     const result = await User.register(
       email,
       password,
@@ -127,6 +141,20 @@ exports.login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
       return res.status(401).json({ message: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
+    }
+
+    if (user.role === "patient") {
+      const [rows] = await db.execute(
+        "SELECT is_blacklisted FROM patient WHERE patient_id = ?",
+        [user.entity_id]
+      );
+
+      if (rows.length > 0 && rows[0].is_blacklisted) {
+        return res.status(403).json({
+          message:
+            "บัญชีผู้ป่วยนี้ถูกระงับการใช้งาน เนื่องจากยกเลิกนัดเกิน 3 ครั้ง โปรดติดต่อเจ้าหน้าที่เพื่อปลดล็อก",
+        });
+      }
     }
 
     // กรณี Nurse

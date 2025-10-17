@@ -182,7 +182,7 @@ const MyAppointment = () => {
     }
 
     return (
-        <div className="container mx-auto p-4 md:p-8">
+        <div className="container mx-auto p-4 md:p-8 mt-16">
             <h2 className="text-3xl font-bold text-primary-default mb-6">นัดหมายของฉัน</h2>
 
             {/* Blacklist Status Display */}

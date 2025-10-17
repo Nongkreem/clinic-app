@@ -138,25 +138,42 @@ exports.updateAppointmentStatus = async (req, res) => {
 
 
 exports.cancelPatientAppointment = async (req, res) => {
-    const { id } = req.params; 
-    const patient_id = req.user.entity_id; 
+  const { id } = req.params; 
+  const patient_id = req.user.entity_id; 
 
-    if (!patient_id) {
-        return res.status(401).json({ message: 'ไม่ได้รับอนุญาต: ไม่พบข้อมูลผู้ป่วย' });
+  if (!patient_id) {
+    return res.status(401).json({ message: 'ไม่ได้รับอนุญาต: ไม่พบข้อมูลผู้ป่วย' });
+  }
+
+  try {
+    const result = await Appointment.cancelAppointment(id, patient_id);
+
+    if (result === true) {
+      return res.status(200).json({ message: 'ยกเลิกนัดหมายสำเร็จ' });
     }
 
-    try {
-        const success = await Appointment.cancelAppointment(id, patient_id);
-        if (success) {
-            res.status(200).json({ message: 'ยกเลิกนัดหมายสำเร็จ' });
-        } else {
-            res.status(404).json({ message: 'ไม่พบข้อมูลนัดหมายหรือคุณไม่ได้รับอนุญาตให้ยกเลิกนัดหมายนี้' });
-        }
-    } catch (error) {
-        console.error('Error cancelling patient appointment:', error);
-        res.status(500).json({ message: 'เกิดข้อผิดพลาดในการยกเลิกนัดหมาย' });
+    // ถ้ามีข้อมูล cancellation_count กลับมา
+    if (result && result.newCount !== undefined) {
+      const remaining = Math.max(0, 3 - result.newCount);
+      if (result.isBlacklisted) {
+        return res.status(403).json({
+          message: 'คุณถูกระงับการใช้งานเนื่องจากยกเลิกนัดเกิน 3 ครั้ง โปรดติดต่อเจ้าหน้าที่เพื่อปลดล็อก',
+        });
+      }
+      return res.status(200).json({
+        message: `ยกเลิกนัดหมายสำเร็จ คุณเหลือโอกาสยกเลิกได้อีก ${remaining} ครั้งก่อนถูกระงับการใช้งาน`,
+      });
     }
+
+    return res.status(404).json({
+      message: 'ไม่พบข้อมูลนัดหมายหรือคุณไม่ได้รับอนุญาตให้ยกเลิกนัดหมายนี้',
+    });
+  } catch (error) {
+    console.error('Error cancelling patient appointment:', error);
+    res.status(500).json({ message: 'เกิดข้อผิดพลาดในการยกเลิกนัดหมาย' });
+  }
 };
+
 
 exports.completePatientAppointment = async (req, res) => {
     const { id } = req.params; 

@@ -1,11 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Home,
-  CalendarPlus,
-  ClipboardList,
-  CalendarDays,
-} from "lucide-react";
+import { Home, CalendarPlus, ClipboardList, CalendarDays } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 const Navbar = () => {
@@ -19,22 +14,22 @@ const Navbar = () => {
     if (!isAuthenticated) {
       navigate("/login");
     } else {
-      // ถ้าเป็นเมนู "หน้าหลัก" และล็อกอินแล้ว ให้ไป /patient/home
+      // ถ้าเป็นเมนูหน้าหลักหรือโลโก้ ให้ไปหน้า landing เสมอ
       if (id === "home") {
-        navigate("/patient/home");
+        navigate("/patient/landing");
       } else {
         navigate(path);
       }
     }
   };
 
-  // ✅ เมนูหลัก (ใช้ทั้ง Desktop & Mobile)
+  // เมนูหลัก (ใช้ทั้ง Desktop & Mobile)
   const menuItems = [
     {
       id: "home",
       label: "หน้าหลัก",
       icon: <Home size={20} />,
-      path: "/", // เส้นทางทั่วไป ถ้าล็อกอินจะ override เป็น /patient/home
+      path: "/patient/landing",
     },
     {
       id: "create",
@@ -58,17 +53,22 @@ const Navbar = () => {
 
   return (
     <>
-      {/* 🖥️ Desktop Navbar */}
-      <header className="hidden lg:flex items-center justify-between bg-white fixed top-0 left-0 right-0 z-50 shadow-sm h-[80px] px-10">
+      {/* Desktop Navbar */}
+      <header
+        className="hidden lg:flex items-center justify-between 
+            fixed top-0 left-0 right-0 z-50
+            bg-white/50 backdrop-blur-md 
+            h-[80px] px-10 transition-all duration-300"
+      >
         {/* LOGO */}
         <div
           className="flex items-center cursor-pointer"
-          onClick={() => navigate("/landing")}
+          onClick={() => navigate("/patient/landing")}
         >
           <img
             src="/assets/logo.png"
             alt="Clinic Logo"
-            className="w-[120px] h-auto object-contain"
+            className="w-16 h-auto object-contain"
           />
         </div>
 

@@ -112,3 +112,6 @@ CREATE TABLE symptomAssessmentResult (
   CONSTRAINT fk_sar_patient FOREIGN KEY (patient_id) REFERENCES patient(patient_id) ON DELETE RESTRICT,
   CONSTRAINT fk_sar_service FOREIGN KEY (recommended_service_id) REFERENCES services(service_id) ON DELETE RESTRICT
 );
+
+ALTER TABLE patient
+ADD COLUMN is_blacklisted BOOLEAN DEFAULT FALSE;
