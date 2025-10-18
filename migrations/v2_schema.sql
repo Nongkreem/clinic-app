@@ -1,5 +1,5 @@
 ALTER TABLE appointment
-MODIFY COLUMN ชื่อคอลัมน์ ENUM('pending','approved','rejected','confirmed','cancelled','prechecked','completed');
+MODIFY COLUMN status ENUM('pending','approved','rejected','confirmed','cancelled','prechecked','completed');
 
 CREATE TABLE counterTerminalSchedules (
   ct_i int NOT NULL,

@@ -38,6 +38,7 @@ import AppoinmentBooking from "./pages/patient/AppoinmentBooking.jsx";
 import MyAppointment from "./pages/patient/MyAppointment.jsx";
 import Landing from "./pages/Landing.jsx";
 import SymptomAssessment from "./pages/patient/SymptomAsessment.jsx";
+import Terms from "./pages/patient/Terms.jsx";
 
 // Specific Pages for Nurse
 import NurseDashboard from "./pages/nurse/NurseDashboard";
@@ -91,26 +92,12 @@ function App() {
 
   return (
     <>
-      {console.log("ToastContainer should render")}
-      <ToastContainer
-        position="top-center"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="colored"
-        style={{ zIndex: 9999 }}
-      />
 
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-
+        <Route path="/terms" element={<Terms />} />
         {/* Public Pages with Navbar */}
         <Route element={<TopNavbarLayout />}>
           <Route index element={<Home />} />

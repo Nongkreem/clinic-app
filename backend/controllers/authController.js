@@ -58,7 +58,7 @@ exports.register = async (req, res) => {
 
     // ตรวจสอบว่า HN นี้ถูก blacklist หรือไม่
     const [existingPatient] = await db.execute(
-      "SELECT is_blacklisted FROM patient WHERE HN = ?",
+      "SELECT is_blacklisted FROM patient WHERE hn = ?",
       [hn]
     );
 
@@ -216,3 +216,65 @@ exports.login = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// ตรวจสอบว่า HN ถูก blacklist หรือไม่
+exports.checkBlacklist = async (req, res) => {
+  console.log('🔵 === checkBlacklist function CALLED ===');
+  
+  try {
+    const { hn } = req.body;
+    console.log('🔍 Received HN:', hn);
+
+    if (!hn) {
+      console.log('❌ No HN provided');
+      return res.status(400).json({ 
+        success: false, 
+        message: "กรุณาระบุหมายเลข HN" 
+      });
+    }
+
+    console.log('🔍 Querying database for HN:', hn);
+    
+    const [rows] = await db.execute(
+      "SELECT is_blacklisted FROM patient WHERE hn = ? LIMIT 1",
+      [hn]
+    );
+
+    console.log('📊 Query result:', rows);
+    console.log('📊 Rows count:', rows.length);
+
+    // ถ้าไม่พบข้อมูล = ผู้ป่วยใหม่ = ไม่ได้ถูก blacklist
+    if (rows.length === 0) {
+      console.log('ℹ️ Patient not found in database - allowing registration (new patient)');
+      return res.status(200).json({ 
+        success: true, 
+        isBlacklisted: false,
+        message: "ผู้ป่วยใหม่ - อนุญาตให้ลงทะเบียน" 
+      });
+    }
+
+    const isBlacklisted = rows[0].is_blacklisted === 1;
+    console.log('✅ is_blacklisted value:', rows[0].is_blacklisted);
+    console.log('✅ isBlacklisted (boolean):', isBlacklisted);
+
+    const response = { 
+      success: true, 
+      isBlacklisted 
+    };
+    
+    console.log('📤 Sending response:', response);
+    return res.status(200).json(response);
+    
+  } catch (err) {
+    console.error("❌ checkBlacklist error:", err);
+    console.error("❌ Error stack:", err.stack);
+    
+    return res.status(500).json({ 
+      success: false, 
+      message: "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์",
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+};
+
+console.log('📍 checkBlacklist function exported:', typeof exports.checkBlacklist);

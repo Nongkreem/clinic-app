@@ -3,8 +3,8 @@ import { useNavigate, Link, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import FormGroup from "../components/common/FormGroup";
 import Button from "../components/common/Button";
-import { toast, ToastContainer } from "react-toastify"; // เพิ่ม ToastContainer
-import "react-toastify/dist/ReactToastify.css"; // เพิ่ม CSS
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -15,25 +15,26 @@ const Login = () => {
   const [shouldRedirect, setShouldRedirect] = useState(false);
 
   // ป้องกัน auto-redirect ถ้า user login แล้ว
-  // useEffect(() => {
-  //   if (isAuthenticated && user?.role && shouldRedirect) {
-  //     const redirectPath = {
-  //       patient: "/patient/landing",
-  //       doctor: "/doctor",
-  //       nurse: "/nurse",
-  //       head_nurse: "/head_nurse",
-  //     }[user.role] || "/";
-      
-  //     navigate(redirectPath, { replace: true });
-  //   }
-  // }, [isAuthenticated, user, navigate, shouldRedirect]);
+  useEffect(() => {
+    if (isAuthenticated && user?.role && shouldRedirect) {
+      const redirectPath = {
+        patient: "/patient/landing",
+        doctor: "/doctor",
+        nurse: "/nurse",
+        head_nurse: "/head_nurse",
+      }[user.role] || "/";
+
+      navigate(redirectPath, { replace: true });
+    }
+  }, [isAuthenticated, user, navigate, shouldRedirect]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    e.stopPropagation(); //ป้องกัน bubbling ที่อาจ trigger native submit
 
     try {
       const result = await login(email, password);
-      
+
       console.log("=== LOGIN DEBUG ===");
       console.log("Login result:", result);
       console.log("Result success:", result?.success);
@@ -50,22 +51,23 @@ const Login = () => {
           setShouldRedirect(true); // อนุญาตให้ redirect
           const userData = JSON.parse(localStorage.getItem("user"));
           if (userData?.role) {
-            const redirectPath = {
-              patient: "/patient/landing",
-              doctor: "/doctor",
-              nurse: "/nurse",
-              head_nurse: "/head_nurse",
-            }[userData.role] || "/";
-            
+            const redirectPath =
+              {
+                patient: "/patient/landing",
+                doctor: "/doctor",
+                nurse: "/nurse",
+                head_nurse: "/head_nurse",
+              }[userData.role] || "/";
+
             navigate(redirectPath, { replace: true });
           }
-        }, 1500);
+        });
       } else {
-        console.log("❌ Login FAILED - Showing error toast");
-        const errorMessage = result?.message || "เข้าสู่ระบบไม่สำเร็จ กรุณาลองอีกครั้ง";
+        const errorMessage =
+          result?.message || "เข้าสู่ระบบไม่สำเร็จ กรุณาลองอีกครั้ง";
         console.log("Error message:", errorMessage);
         console.log("About to call toast.error...");
-        
+
         // เรียก toast.error
         const toastId = toast.error(errorMessage, {
           position: "top-right",
@@ -76,7 +78,7 @@ const Login = () => {
           draggable: true,
           theme: "light",
         });
-        
+
         console.log("Toast.error called with ID:", toastId);
         console.log("Toast should be visible now!");
       }
@@ -86,45 +88,25 @@ const Login = () => {
     }
   };
 
-  // ฟังก์ชันทดสอบ Toast
-  const testToast = () => {
-    console.log("🧪 Testing toast...");
-    toast.error("ทดสอบ Toast Error - ถ้าเห็นนี่แสดงว่า Toast ทำงาน!");
-    toast.success("ทดสอบ Toast Success!");
-    toast.info("ทดสอบ Toast Info!");
-    toast.warning("ทดสอบ Toast Warning!");
-  };
-
   // ถ้า login แล้วจะไม่แสดงหน้า login
   if (isAuthenticated && user?.role) {
-    const redirectPath = {
-      patient: "/patient/landing",
-      doctor: "/doctor",
-      nurse: "/nurse",
-      head_nurse: "/head_nurse",
-    }[user.role] || "/";
-    
+    const redirectPath =
+      {
+        patient: "/patient/landing",
+        doctor: "/doctor",
+        nurse: "/nurse",
+        head_nurse: "/head_nurse",
+      }[user.role] || "/";
+
     return <Navigate to={redirectPath} replace />;
   }
 
   return (
     <>
-      {/* เพิ่ม ToastContainer ในหน้า Login เพื่อทดสอบ */}
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-        style={{ zIndex: 99999 }}
-      />
-      
-      <div className="min-h-screen flex" style={{ position: 'relative', zIndex: 1 }}>
+      <div
+        className="min-h-screen flex"
+        style={{ position: "relative", zIndex: 1 }}
+      >
         {/* ซ้าย: พื้นหลัง */}
         <div
           className="hidden lg:flex w-1/2 items-center justify-center bg-cover bg-center relative"
@@ -142,17 +124,7 @@ const Login = () => {
             <h2 className="text-3xl font-bold text-center text-primary-default mb-8">
               เข้าสู่ระบบ
             </h2>
-
-            {/* ปุ่มทดสอบ Toast */}
-            <Button
-              type="button"
-              onClick={testToast}
-              variant="secondary"
-              className="w-full mb-4"
-            >
-              🧪 ทดสอบ Toast (กดดู!)
-            </Button>
-
+            {console.log("Render form now")}
             <form onSubmit={handleSubmit}>
               <FormGroup
                 label="อีเมล"
@@ -178,14 +150,13 @@ const Login = () => {
                 inputClassName="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-default h-12"
               />
 
-              <Button
+              <button
                 type="submit"
-                variant="primary"
-                className="w-full mt-6"
-                disabled={loading}
+                className="w-full bg-primary-default hover:bg-stromboli-800 text-white py-3 rounded-lg mt-6"
+                // onClick={(e)=>e.preventDefault()}
               >
                 {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
-              </Button>
+              </button>
 
               <p className="text-center text-sm mt-4 text-gray-600">
                 ยังไม่มีบัญชีใช่ไหม?{" "}
@@ -204,4 +175,4 @@ const Login = () => {
   );
 };
 
-export default Login; 
+export default Login;

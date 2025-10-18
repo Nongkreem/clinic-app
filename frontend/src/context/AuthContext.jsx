@@ -51,7 +51,6 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-
     setLoading(true);
     // ล้าง token เก่า
     localStorage.removeItem("token");
@@ -60,6 +59,8 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
 
     try {
+      console.log("🛰️ API_BASE_URL =", API_BASE_URL);
+      console.log("🛰️ Full endpoint =", `${API_BASE_URL}/api/auth/login`);
 
       const response = await axios.post(`${API_BASE_URL}/api/auth/login`, {
         email,
@@ -155,16 +156,30 @@ export const AuthProvider = ({ children }) => {
         gender,
       });
       setLoading(false);
+      return {
+        success: true,
+        message: response.data?.message || "ลงทะเบียนสำเร็จ!",
+      };
     } catch (error) {
       setLoading(false);
-      console.error(
-        "Registration failed:",
-        error.response?.data || error.message
-      );
-      return {
-        success: false,
-        message: error.response?.data?.message || "การลงทะเบียนล้มเหลว",
-      };
+      const status = error.response?.status;
+      const message = error.response?.data?.message || "การลงทะเบียนล้มเหลว";
+      if (status === 403) {
+        return {
+          success: false,
+          message:
+            message ||
+            "ไม่สามารถลงทะเบียนได้ เนื่องจากบัญชีนี้ถูกระงับ โปรดติดต่อเจ้าหน้าที่",
+        };
+      }
+      if (status === 409) {
+        return {
+          success: false,
+          message: message || "ข้อมูลนี้ถูกใช้งานแล้ว",
+        };
+      }
+
+      return { success: false, message };
     }
   };
 
