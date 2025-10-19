@@ -1,5 +1,5 @@
 import React from 'react'
-import headerImg from '../../public/assets/header.jpg';
+import headerImg from '../../public/assets/doctor-team.png';
 import Button from './common/Button';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -18,7 +18,7 @@ const HeroSection = () => {
     <div className='relative rounded-lg overflow-hidden'>
       <img src={headerImg} alt="" className='w-full h-[600px] object-cover'/>
       {/* overlay */}
-      <div className='absolute inset-0 bg-primary-default opacity-50'></div>
+      <div className='absolute inset-0'></div>
       
       <div className='absolute inset-0 flex flex-col items-start justify-center px-6 sm:px-12 md:px-20 lg:px-28 gap-8'>
         <div className='flex flex-col gap-6'>

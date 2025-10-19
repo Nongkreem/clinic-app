@@ -1,36 +1,36 @@
-import React, { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
-import FormGroup from '../components/common/FormGroup'; // ✅ Import FormGroup
-import Button from '../components/common/Button';     // ✅ Import Button
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import FormGroup from "../components/common/FormGroup";
+import Button from "../components/common/Button";
+import { toast } from "react-toastify";
+import axios from "axios";
 
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";
 
 const Register = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [hn, setHn] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [dateOfBirth, setDateOfBirth] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [gender, setGender] = useState('female'); // Set default to female as per the request
-  const role = 'patient';
-  const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
-  const { register, loading } = useAuth();
-  const navigate = useNavigate(); 
-  // State to manage the steps of the form
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [hn, setHn] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [gender, setGender] = useState("female");
+  const role = "patient";
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
 
   const handleNext = () => {
-    setError('');
-    
+    setError("");
+
     if (!hn || !firstName || !lastName || !dateOfBirth || !gender) {
-      setError('กรุณากรอกข้อมูลผู้ป่วยให้ครบถ้วน');
+      setError("กรุณากรอกข้อมูลผู้ป่วยให้ครบถ้วน");
       return;
     }
-    
+
     const birthDate = new Date(dateOfBirth);
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
@@ -38,21 +38,21 @@ const Register = () => {
     const dayDifference = today.getDate() - birthDate.getDate();
 
     if (monthDifference < 0 || (monthDifference === 0 && dayDifference < 0)) {
-        age--;
+      age--;
     }
 
     if (age < 12) {
-      setError('ผู้ใช้ควรมีอายุไม่ต่ำกว่า 10 ปี');
+      setError("ผู้ใช้ควรมีอายุไม่ต่ำกว่า 12 ปี");
       return;
     }
-    
-    if (gender !== 'female') {
-      setError('คลินิกนี้สำหรับผู้หญิงเท่านั้น');
+
+    if (gender !== "female") {
+      setError("คลินิกนี้สำหรับผู้หญิงเท่านั้น");
       return;
     }
 
     if (!/^\d{7}$/.test(hn)) {
-      setError('หมายเลข HN ต้องเป็นตัวเลข 7 หลัก');
+      setError("หมายเลข HN ต้องเป็นตัวเลข 7 หลัก");
       return;
     }
 
@@ -61,24 +61,22 @@ const Register = () => {
 
   const handleBack = () => {
     setStep(1);
-    setError('');
+    setError("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setMessage('');
+    setLoading(true);
+    setError("");
 
+    // Validate password
     if (password !== confirmPassword) {
-      setError('รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน');
-      return;
-    }
-    if (!/^\d{10}$/.test(phoneNumber)) {
-      setError('เบอร์โทรศัพท์ต้องเป็นตัวเลข 10 หลัก');
+      setError("รหัสผ่านไม่ตรงกัน");
+      setLoading(false);
       return;
     }
 
-    const result = await register(
+    const formData = {
       email,
       password,
       role,
@@ -87,24 +85,65 @@ const Register = () => {
       lastName,
       dateOfBirth,
       phoneNumber,
-      gender
-    );
+      gender,
+    };
 
-    if (result.success) {
-      setMessage(result.message + ' ตอนนี้คุณสามารถเข้าสู่ระบบได้แล้ว');
-      setTimeout(() => {
-        console.log('Navigating to login page...');
-        navigate('/login');
-      }, 2000); 
-    } else {
-      setError(result.message);
+    try {
+      // ✅ ตรวจสอบ blacklist ก่อน
+      console.log("🔍 Checking blacklist for HN:", hn);
+      console.log("📍 API URL:", `${API_BASE_URL}/api/auth/check-blacklist`);
+
+      const checkRes = await axios.post(
+        `${API_BASE_URL}/api/auth/check-blacklist`,
+        { hn },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("✅ Blacklist check response:", checkRes.data);
+
+      if (checkRes.data.isBlacklisted) {
+        toast.error(
+          "ผู้ป่วยรายนี้ถูกระงับบัญชี เนื่องจากยกเลิกนัดเกิน 3 ครั้ง โปรดติดต่อเจ้าหน้าที่เพื่อปลดล็อกบัญชี",
+          {
+            autoClose: 5000,
+          }
+        );
+        setLoading(false);
+        return;
+      }
+
+      // ✅ ไม่ได้ถูก blacklist - เก็บข้อมูลไว้ชั่วคราว
+      console.log("✅ Not blacklisted - saving to localStorage");
+      localStorage.setItem("pendingRegistration", JSON.stringify(formData));
+
+      // พาไปหน้า Terms
+      toast.info("กรุณายอมรับข้อตกลงและเงื่อนไข");
+      navigate("/terms");
+    } catch (error) {
+      console.error("❌ Error:", error);
+      console.error("❌ Response:", error.response);
+
+      if (error.code === "ERR_NETWORK") {
+        toast.error("ไม่สามารถเชื่อมต่อกับ Server ได้ กรุณาลองอีกครั้ง");
+      } else if (error.response?.status === 404) {
+        toast.error("ไม่พบ API endpoint กรุณาติดต่อผู้ดูแลระบบ");
+      } else if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("เกิดข้อผิดพลาดในการตรวจสอบข้อมูล");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gray-100">
       <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md relative z-10">
-        
         {/* Progress Bar */}
         <div className="relative pt-1">
           <div className="flex mb-2 items-center justify-between text-primary-default">
@@ -115,35 +154,34 @@ const Register = () => {
             </div>
             <div className="text-right">
               <span className="text-xs font-semibold inline-block">
-                {step === 1 ? '50%' : '100%'}
+                {step === 1 ? "50%" : "100%"}
               </span>
             </div>
           </div>
           <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-stromboli-200">
-            <div 
-              style={{ width: `${step === 1 ? '50%' : '100%'}` }} 
+            <div
+              style={{ width: `${step === 1 ? "50%" : "100%"}` }}
               className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-primary-default transition-all duration-500 ease-in-out"
             ></div>
           </div>
         </div>
-        
-        <h2 className="text-3xl font-bold text-center text-primary-default mb-8">ลงทะเบียนผู้ป่วย</h2>
-        
+
+        <h2 className="text-3xl font-bold text-center text-primary-default mb-8">
+          ลงทะเบียนผู้ป่วย
+        </h2>
+
         <form onSubmit={handleSubmit}>
           {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-6" role="alert">
+            <div
+              className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-6"
+              role="alert"
+            >
               <span className="block sm:inline">{error}</span>
-            </div>
-          )}
-          {message && (
-            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg relative mb-6" role="alert">
-              <span className="block sm:inline">{message}</span>
             </div>
           )}
 
           {step === 1 && (
             <>
-              {/* Using imported FormGroup Component */}
               <FormGroup
                 label="HN (หมายเลขผู้ป่วย 7 หลัก)"
                 type="text"
@@ -157,7 +195,6 @@ const Register = () => {
                 title="กรุณากรอก HN เป็นตัวเลข 7 หลัก"
               />
 
-              {/* Using imported FormGroup Component with select type */}
               <FormGroup
                 label="เพศ"
                 as="select"
@@ -166,11 +203,9 @@ const Register = () => {
                 value={gender}
                 onChange={(e) => setGender(e.target.value)}
                 required
-                options={[{value: 'female', label: 'หญิง'}]}
-              >
-              </FormGroup>
+                options={[{ value: "female", label: "หญิง" }]}
+              />
 
-              {/* Using imported FormGroup Component */}
               <FormGroup
                 label="ชื่อ"
                 type="text"
@@ -182,7 +217,6 @@ const Register = () => {
                 required
               />
 
-              {/* Using imported FormGroup Component */}
               <FormGroup
                 label="นามสกุล"
                 type="text"
@@ -194,7 +228,6 @@ const Register = () => {
                 required
               />
 
-              {/* Using imported FormGroup Component */}
               <FormGroup
                 label="วันเดือนปีเกิด"
                 type="date"
@@ -206,10 +239,11 @@ const Register = () => {
               />
 
               <div className="flex justify-end mt-6">
-                {/* Using imported Button Component */}
-                <Button type="button" 
-                className="w-full bg-primary-default hover:bg-stromboli-400 text-white"
-                onClick={handleNext}>
+                <Button
+                  type="button"
+                  className="w-full bg-primary-default hover:bg-stromboli-400 text-white"
+                  onClick={handleNext}
+                >
                   ถัดไป
                 </Button>
               </div>
@@ -231,7 +265,6 @@ const Register = () => {
                 title="กรุณากรอกเบอร์โทรศัพท์เป็นตัวเลข 10 หลัก"
               />
 
-              {/* Using imported FormGroup Component */}
               <FormGroup
                 label="อีเมล"
                 type="email"
@@ -243,7 +276,6 @@ const Register = () => {
                 required
               />
 
-              {/* Using imported FormGroup Component */}
               <FormGroup
                 label="รหัสผ่าน"
                 type="password"
@@ -251,11 +283,11 @@ const Register = () => {
                 name="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="ใส่รหัสผ่าน"
+                placeholder="ใส่รหัสผ่าน (อย่างน้อย 6 ตัวอักษร)"
                 required
+                minLength={6}
               />
 
-              {/* Using imported FormGroup Component */}
               <FormGroup
                 label="ยืนยันรหัสผ่าน"
                 type="password"
@@ -268,22 +300,33 @@ const Register = () => {
               />
 
               <div className="flex justify-between mt-6">
-                {/* Using imported Button Component */}
-                <Button type="button" variant="secondary" className="w-1/2 mr-2" onClick={handleBack}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="w-1/2 mr-2 bg-stromboli-400"
+                  onClick={handleBack}
+                  disabled={loading}
+                >
                   ย้อนกลับ
                 </Button>
-                {/* Using imported Button Component */}
-                <Button type="submit" variant="success" 
-                className="w-1/2 ml-2  bg-primary-default hover:bg-stromboli-400 text-white"  disabled={loading}>
-                  {loading ? 'กำลังลงทะเบียน...' : 'ลงทะเบียน'}
+                <Button
+                  type="submit"
+                  variant="success"
+                  className="w-1/2 ml-2 bg-primary-default hover:bg-stromboli-400 text-white"
+                  disabled={loading}
+                >
+                  {loading ? "กำลังตรวจสอบ..." : "ถัดไป"}
                 </Button>
               </div>
             </>
           )}
 
           <p className="text-center text-sm mt-4 text-gray-600">
-            มีบัญชีอยู่แล้ว?{' '}
-            <Link to="/login" className="text-secondary-default hover:underline font-semibold">
+            มีบัญชีอยู่แล้ว?{" "}
+            <Link
+              to="/login"
+              className="text-secondary-default hover:underline font-semibold"
+            >
               เข้าสู่ระบบที่นี่
             </Link>
           </p>

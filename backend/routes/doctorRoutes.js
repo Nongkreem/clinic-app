@@ -27,6 +27,14 @@ router.get(
 
 // หมอนัดติดตามอาการ
 router.post('/doctor/follow-up', authenticateToken, authorizeRole(['doctor']), doctorController.createFollowUpAppointment);
+// ดู slot ที่หมอคนนั้นสามารถนัดติดตามอาการได้
+router.get(
+  "/doctor/available-slots",
+  authenticateToken,
+  authorizeRole(["doctor"]),
+  doctorController.getDoctorAvailableSlots
+);
+
 // Route สำหรับอัปเดตข้อมูลแพทย์
 router.put('/doctors/:id', authenticateToken, authorizeRole(['nurse', 'head_nurse']), doctorController.updateDoctor);
 

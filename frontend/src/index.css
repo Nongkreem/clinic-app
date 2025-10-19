@@ -9,3 +9,12 @@ body {
 :active hr{
   @apply block;
 }
+
+.Toastify__toast-container {
+  z-index: 99999 !important;
+}
+
+.Toastify__toast {
+  min-height: 64px;
+}
+

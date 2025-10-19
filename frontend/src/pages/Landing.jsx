@@ -24,7 +24,7 @@ export default function Landing() {
         <HeroSection />
       </div>
 
-      <div className="mt-[60px]" ref={servicesRef}>
+      <div className="mt-[24px]" ref={servicesRef}>
         <ServiceDetail />
       </div>
       <BookingProcedure />

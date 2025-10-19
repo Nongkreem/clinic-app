@@ -10,8 +10,6 @@ const MedicalCertificateForm = ({ onCreated, onCancel }) => {
   const [todayAppts, setTodayAppts] = useState([]);
   const [appointmentId, setAppointmentId] = useState("");
   const [reason, setReason] = useState("");
-  const [restFrom, setRestFrom] = useState("");
-  const [restTo, setRestTo] = useState("");
   const [otherNotes, setOtherNotes] = useState("");
 
   const [loading, setLoading] = useState(false);
@@ -84,7 +82,7 @@ const MedicalCertificateForm = ({ onCreated, onCancel }) => {
       <div className="mb-3">
         <label className="mb-1 block text-sm font-semibold text-gray-700">เหตุผล</label>
         <textarea
-          className="w-full rounded border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+          className="w-full rounded border px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400"
           rows={3}
           value={reason}
           onChange={(e) => setReason(e.target.value)}
@@ -96,7 +94,7 @@ const MedicalCertificateForm = ({ onCreated, onCancel }) => {
       <div className="mb-4">
         <label className="mb-1 block text-sm font-semibold text-gray-700">หมายเหตุ (ถ้ามี)</label>
         <textarea
-          className="w-full rounded border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+          className="w-full rounded border px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400"
           rows={2}
           value={otherNotes}
           onChange={(e) => setOtherNotes(e.target.value)}

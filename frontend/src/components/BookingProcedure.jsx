@@ -1,10 +1,12 @@
 import React, { useRef } from "react";
 import { motion, useInView } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { assets } from "../../public/assets/assets";
 
 const BookingProcedure = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const navigate = useNavigate();
 
   return (
     <div
@@ -56,12 +58,12 @@ const BookingProcedure = () => {
           className="w-[320px] md:w-[420px] mt-10"
         />
 
-        {/* CTA */}
         <motion.button
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 1, delay: 1.2 }}
           className="mt-10 bg-primary-default text-white px-8 py-3 rounded-full text-lg hover:bg-primary-dark transition-all shadow-md"
+          onClick={()=>navigate("/patient/assessment")}
         >
           เริ่มทำแบบประเมินอาการ
         </motion.button>

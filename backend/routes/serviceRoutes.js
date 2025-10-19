@@ -8,7 +8,7 @@ const { authorizeRole } = require('../middleware/authorization');
 router.post('/services', authenticateToken, authorizeRole(['nurse', 'head_nurse']), serviceController.createService);
 
 // Route สำหรับดึงข้อมูลบริการทั้งหมด
-router.get('/services', authenticateToken, authorizeRole(['nurse', 'head_nurse', 'patient']), serviceController.getAllServices);
+router.get('/services', authenticateToken, authorizeRole(['nurse', 'head_nurse', 'patient', 'doctor']), serviceController.getAllServices);
 
 router.get('/services/publish', serviceController.getAllServices);
 

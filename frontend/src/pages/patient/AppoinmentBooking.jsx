@@ -1,439 +1,704 @@
 // frontend/src/pages/AppoinmentBooking.jsx
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import Button from '../../components/common/Button';
-import Popup from '../../components/common/Popup'; 
-import { useAuth } from '../../context/AuthContext';
-import { ChevronDown, ChevronUp, CalendarDays, Clock, CheckCircle, XCircle } from 'lucide-react'; // Icons
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import Button from "../../components/common/Button";
+import Popup from "../../components/common/Popup";
+import { useAuth } from "../../context/AuthContext";
+import { useSystemDate } from "../../hooks/useSystemDate";
 
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
+import {
+  ChevronDown,
+  ChevronUp,
+  CalendarDays,
+  CheckCircle,
+} from "lucide-react"; // Icons
+
+const API_BASE_URL =
+  import.meta.env.VITE_BACKEND_URL || "http://localhost:5001";
 
 const AppoinmentBooking = () => {
-    const { user, loading: authLoading } = useAuth(); // Get authenticated user data
-    const patientId = user?.entity_id; // patient_id from AuthContext
+  const { user, loading: authLoading } = useAuth();
+  const patientId = user?.entity_id;
 
-    const [step, setStep] = useState(1);
-    const [services, setServices] = useState([]);
-    const [error, setError] = useState('');
-    const [message, setMessage] = useState('');
-    const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState(1);
+  const [services, setServices] = useState([]);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
-    // Step 1 States
-    const [expandedServiceId, setExpandedServiceId] = useState(null);
-    const [selectedService, setSelectedService] = useState(null);
-    const [symptoms, setSymptoms] = useState('');
+  // Step 1 States
+  const [expandedServiceId, setExpandedServiceId] = useState(null);
+  const [selectedService, setSelectedService] = useState(null);
+  const [symptoms, setSymptoms] = useState("");
 
-    // Step 2 States
-    const [selectedDate, setSelectedDate] = useState('');
-    const [availableTimeBlocks, setAvailableTimeBlocks] = useState([]);
-    const [selectedTimeBlock, setSelectedTimeBlock] = useState(null); 
-    const [selectedSlot, setSelectedSlot] = useState(null); // stores the actual ers_id
-    const [showConfirmPopup, setShowConfirmPopup] = useState(false);
+  // Step 2 States
+  const [selectedDate, setSelectedDate] = useState("");
+  const [availableTimeBlocks, setAvailableTimeBlocks] = useState([]);
+  const [selectedTimeBlock, setSelectedTimeBlock] = useState(null);
+  const [selectedSlot, setSelectedSlot] = useState(null); // stores the actual ers_id
+  const [showConfirmPopup, setShowConfirmPopup] = useState(false);
 
-    // Step 3 States
-    const [bookedAppointmentId, setBookedAppointmentId] = useState(null);
-    const [finalBookingDetails, setFinalBookingDetails] = useState(null);
+  // Step 3 States
+  const [bookedAppointmentId, setBookedAppointmentId] = useState(null);
+  const [finalBookingDetails, setFinalBookingDetails] = useState(null);
 
-    // Fetch services on component mount
-    useEffect(() => {
-        const fetchServices = async () => {
-            if (!user || authLoading) return; // Wait for user data to be loaded
-            setLoading(true);
-            try {
-                const response = await axios.get(`${API_BASE_URL}/api/services`, {
-                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-                });
-                setServices(response.data);
-            } catch (err) {
-                console.error('Failed to fetch services:', err);
-                setError('ไม่สามารถโหลดข้อมูลบริการได้');
-            } finally {
-                setLoading(false);
+  // mockdate
+  const { systemDate, loading: dateLoading } = useSystemDate();
+
+  // Fetch services on component mount
+  useEffect(() => {
+    const fetchServices = async () => {
+      if (!user || authLoading) return; // Wait for user data to be loaded
+      setLoading(true);
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/services`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+        setServices(response.data);
+      } catch (err) {
+        console.error("Failed to fetch services:", err);
+        setError("ไม่สามารถโหลดข้อมูลบริการได้");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchServices();
+  }, [user, authLoading]); // Re-run if user or authLoading changes
+
+  // Fetch available time blocks when selectedService or selectedDate changes (Step 2)
+  useEffect(() => {
+    const fetchAvailableTimeBlocks = async () => {
+      if (step === 2 && selectedService && selectedDate) {
+        setLoading(true);
+        setError("");
+        try {
+          const response = await axios.get(
+            `${API_BASE_URL}/api/appointments/available-slots`,
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+              params: {
+                scheduleDate: selectedDate,
+                serviceId: selectedService.service_id,
+              },
             }
-        };
-        fetchServices();
-    }, [user, authLoading]); // Re-run if user or authLoading changes
+          );
 
-    // Fetch available time blocks when selectedService or selectedDate changes (Step 2)
-    useEffect(() => {
-        const fetchAvailableTimeBlocks = async () => {
-            if (step === 2 && selectedService && selectedDate) {
-                setLoading(true);
-                setError('');
-                try {
-                    const response = await axios.get(`${API_BASE_URL}/api/appointments/available-slots`, {
-                        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-                        params: {
-                            scheduleDate: selectedDate,
-                            serviceId: selectedService.service_id
-                        }
-                    });
-                    setAvailableTimeBlocks(response.data);
-                    setSelectedTimeBlock(null);
-                    setSelectedSlot(null);      
-                } catch (err) {
-                    console.error('Failed to fetch available time blocks:', err);
-                    setError('ไม่สามารถโหลด Slot เวลาที่ว่างได้สำหรับวันนี้');
-                    setAvailableTimeBlocks([]);
-                } finally {
-                    setLoading(false);
-                }
-            } else {
-                setAvailableTimeBlocks([]); // Clear time blocks if conditions not met
-            }
-        };
-        fetchAvailableTimeBlocks();
-    }, [step, selectedService, selectedDate]);
+          let slots = response.data;
 
-    // Handle navigation between steps
-    const handleNextStep = () => {
-        setError('');
-        setMessage('');
-        if (step === 1) {
-            if (!selectedService || !symptoms.trim()) {
-                setError('กรุณาเลือกบริการและกรอกอาการเบื้องต้น');
-                return;
-            }
-        } else if (step === 2) {
-            // ตรวจสอบแค่ Time Block เพราะ selectedSlot จะถูกเลือกโดยอัตโนมัติเมื่อเลือก Time Block
-            if (!selectedDate || !selectedTimeBlock) {
-                setError('กรุณาเลือกวันและช่วงเวลาที่ต้องการนัดหมาย');
-                return;
-            }
-            // Prepare booking details for confirmation Popup
-            setFinalBookingDetails({
-                serviceName: selectedService.service_name,
-                serviceDescription: selectedService.description,
-                appointmentDate: selectedDate,
-                appointmentTime: selectedTimeBlock.slot_start,
-                slotEnd: selectedTimeBlock.slot_end,
-                symptoms: symptoms,
-                ers_id: selectedSlot // selectedSlot คือ ers_id ที่ถูกเลือกโดยอัตโนมัติแล้ว
-            });
-            setShowConfirmPopup(true);
-            console.log(showConfirmPopup);
-            return; // Prevent step advance immediately
+          // กรอง slot ตามเวลา (24 ชม.ล่วงหน้า)
+          const now = new Date();
+          const next24h = new Date(systemDate.getTime() + 24 * 60 * 60 * 1000);
+
+          slots = slots.filter((block) => {
+            const blockStart = new Date(`${selectedDate}T${block.slot_start}`);
+            return blockStart >= next24h;
+          });
+
+          setAvailableTimeBlocks(slots);
+          setSelectedTimeBlock(null);
+          setSelectedSlot(null);
+        } catch (err) {
+          console.error("Failed to fetch available time blocks:", err);
+          setError("ไม่สามารถโหลด Slot เวลาที่ว่างได้สำหรับวันนี้");
+          setAvailableTimeBlocks([]);
+        } finally {
+          setLoading(false);
         }
-        setStep(prevStep => prevStep + 1);
+      } else {
+        setAvailableTimeBlocks([]);
+      }
     };
+    fetchAvailableTimeBlocks();
+  }, [step, selectedService, selectedDate]);
 
-    const handlePrevStep = () => {
-        setError('');
-        setMessage('');
-        setStep(prevStep => prevStep - 1);
-        setSelectedTimeBlock(null); // Clear selected time block if going back from step 2
-        setSelectedSlot(null);      // Clear selected actual slot if going back from step 2
-    };
+  // เช็คเวลาปัจจุบัน
+  const getMinSelectableDate = () => {
+    const next24h = new Date(systemDate.getTime() + 24 * 60 * 60 * 1000); // 24 ชั่วโมงต่อจากนี้
+    return next24h.toLocaleDateString("en-CA", { timeZone: "Asia/Bangkok" });
+  };
 
-    const handleServiceSelect = (service) => {
-        setSelectedService(service);
-        setExpandedServiceId(null); // Collapse the service card
-    };
+  // เช็ควันสูงสุดที่เลือกได้ (ไม่เกิน 1 เดือนจากนี้)
+  const getMaxSelectableDate = () => {
+    const nextMonth = new Date(systemDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+    nextMonth.setMonth(systemDate.getMonth() + 1);
+    return nextMonth.toLocaleDateString("en-CA", { timeZone: "Asia/Bangkok" });
+  };
 
-    const handleTimeBlockSelect = (block) => {
-        // หากเลือก Time Block เดิม ให้ยกเลิกการเลือก
-        if (selectedTimeBlock?.slot_start === block.slot_start && selectedTimeBlock?.slot_end === block.slot_end) {
-            setSelectedTimeBlock(null);
-            setSelectedSlot(null);
-        } else {
-            setSelectedTimeBlock(block);
-            setSelectedSlot(block.ers_ids_in_block[0]); 
-        }
+  // Handle navigation between steps
+  const handleNextStep = () => {
+    setError("");
+    setMessage("");
+    if (step === 1) {
+      if (!selectedService || !symptoms.trim()) {
+        setError("กรุณาเลือกบริการและกรอกอาการเบื้องต้น");
+        return;
+      }
+    } else if (step === 2) {
+      // ตรวจสอบแค่ Time Block เพราะ selectedSlot จะถูกเลือกโดยอัตโนมัติเมื่อเลือก Time Block
+      if (!selectedDate || !selectedTimeBlock) {
+        setError("กรุณาเลือกวันและช่วงเวลาที่ต้องการนัดหมาย");
+        return;
+      }
+      // Prepare booking details for confirmation Popup
+      setFinalBookingDetails({
+        serviceName: selectedService.service_name,
+        serviceDescription: selectedService.description,
+        appointmentDate: selectedDate,
+        appointmentTime: selectedTimeBlock.slot_start,
+        slotEnd: selectedTimeBlock.slot_end,
+        symptoms: symptoms,
+        ers_id: selectedSlot, // selectedSlot คือ ers_id ที่ถูกเลือกโดยอัตโนมัติแล้ว
+      });
+      setShowConfirmPopup(true);
+      console.log(showConfirmPopup);
+      return;
+    }
+    setStep((prevStep) => prevStep + 1);
+  };
+
+  const handlePrevStep = () => {
+    setError("");
+    setMessage("");
+    setStep((prevStep) => prevStep - 1);
+    setSelectedTimeBlock(null); // Clear selected time block if going back from step 2
+    setSelectedSlot(null); // Clear selected actual slot if going back from step 2
+  };
+
+  const handleServiceSelect = (service) => {
+    setSelectedService(service);
+    setExpandedServiceId(null); // Collapse the service card
+  };
+
+  const handleTimeBlockSelect = (block) => {
+    // หากเลือก Time Block เดิม ให้ยกเลิกการเลือก
+    if (
+      selectedTimeBlock?.slot_start === block.slot_start &&
+      selectedTimeBlock?.slot_end === block.slot_end
+    ) {
+      setSelectedTimeBlock(null);
+      setSelectedSlot(null);
+    } else {
+      setSelectedTimeBlock(block);
+      setSelectedSlot(block.ers_ids_in_block[0]);
+    }
+  };
+
+  const handleConfirmBooking = async () => {
+    setShowConfirmPopup(false); // Close modal
+    setLoading(true);
+    setError("");
+    setMessage("");
+
+    if (!patientId) {
+      setError("ไม่พบข้อมูลผู้ป่วย กรุณาลองเข้าสู่ระบบอีกครั้ง");
+      setLoading(false);
+      return;
     }
 
-    const handleConfirmBooking = async () => {
-        setShowConfirmPopup(false); // Close modal
-        setLoading(true);
-        setError('');
-        setMessage('');
-
-        if (!patientId) {
-            setError('ไม่พบข้อมูลผู้ป่วย กรุณาลองเข้าสู่ระบบอีกครั้ง');
-            setLoading(false);
-            return;
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/api/appointments`,
+        {
+          ers_id: selectedSlot,
+          symptoms: finalBookingDetails.symptoms,
+          appointment_type: "patient_booking",
+        },
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
+      );
 
-        try {
-            const response = await axios.post(`${API_BASE_URL}/api/appointments`, {
-                ers_id: selectedSlot,
-                symptoms: finalBookingDetails.symptoms,
-                appointment_type: 'patient_booking'
-            }, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-            });
+      if (response.data.success) {
+        setMessage(response.data.message);
+        setBookedAppointmentId(response.data.appointmentId);
+        setStep(3); // Advance to step 3 on successful booking
+      } else {
+        setError(response.data.message);
+      }
+    } catch (err) {
+      console.error("Error booking appointment:", err);
+      setError(
+        err.response?.data?.message || "เกิดข้อผิดพลาดในการสร้างนัดหมาย"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
-            if (response.data.success) {
-                setMessage(response.data.message);
-                setBookedAppointmentId(response.data.appointmentId);
-                setStep(3); // Advance to step 3 on successful booking
-            } else {
-                setError(response.data.message);
-            }
-        } catch (err) {
-            console.error('Error booking appointment:', err);
-            setError(err.response?.data?.message || 'เกิดข้อผิดพลาดในการสร้างนัดหมาย');
-        } finally {
-            setLoading(false);
-        }
+  const handleCancelBookingPopup = () => {
+    setShowConfirmPopup(false);
+  };
+
+  const navigateToMyAppointments = () => {
+    alert('นำทางไปยังหน้า "นัดหมายของฉัน"');
+  };
+
+  const getFormattedDate = (dateString) => {
+    if (!dateString) return "";
+    const options = {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     };
+    return new Date(dateString).toLocaleDateString("th-TH", options);
+  };
 
-    const handleCancelBookingPopup = () => {
-        setShowConfirmPopup(false);
-    };
-
-    const navigateToMyAppointments = () => {
-        alert('นำทางไปยังหน้า "นัดหมายของฉัน"');
-    };
-
-    const getFormattedDate = (dateString) => {
-        if (!dateString) return '';
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        return new Date(dateString).toLocaleDateString('th-TH', options);
-    };
-
-
-    // Render logic based on steps
-    const renderStepContent = () => {
-        if (loading || authLoading) {
-            return <div className="text-center py-8">กำลังโหลด...</div>;
-        }
-        if (error) {
-            return (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-4" role="alert">
-                    <span className="block sm:inline">{error}</span>
-                </div>
-            );
-        }
-        if (message) {
-            return (
-                <div className="bg-green-50 border border-green-500 text-green-700 px-4 py-3 rounded-lg relative mb-4" role="alert">
-                    <span className="block sm:inline">{message}</span>
-                </div>
-            );
-        }
-
-        switch (step) {
-            case 1: // Select Service
-                return (
-                    <>
-                        <h3 className="text-xl sm:text-2xl font-semibold text-primary-default mb-4 sm:mb-6">1. เลือกบริการที่คุณต้องการ</h3>
-                        <div className="grid gap-4 sm:gap-6 lg:gap-8">
-                            {services.length > 0 ? (
-                                services.map(service => (
-                                    <div 
-                                        key={service.service_id} 
-                                        className={`bg-white rounded-xl p-4 sm:p-6 border-2 transition-all duration-300
-                                            ${selectedService && selectedService.service_id === service.service_id ? 'border-stromboli-400' : 'border-gray-200 hover:border-stromboli-300'}`}
-                                    >
-                                        <div className="flex flex-col sm:flex-row justify-between items-start mb-4 gap-4">
-                                            <div className="flex-shrink-0 w-full sm:w-40 md:w-56">
-                                                <img 
-                                                    src={`../../assets/${service.img_path}`}
-                                                    alt={service.service_name} 
-                                                    className="w-full h-32 object-cover rounded-lg shadow-sm" 
-                                                    onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/80x80/cccccc/ffffff?text=No+Img" }}
-                                                />
-                                            </div>
-                                            <div className="flex-grow w-full sm:w-auto">
-                                                <div className="flex justify-between items-start">
-                                                    <div className="flex-grow">
-                                                        <h4 className="text-lg sm:text-xl font-bold text-primary-default">{service.service_name}</h4>
-                                                        <p className="text-sm text-gray-600 mb-2 line-clamp-2 sm:line-clamp-none">{service.description}</p>
-                                                        <p className="text-lg font-bold text-secondary-default">{service.price} THB</p>
-                                                    </div>
-                                                    <button 
-                                                        onClick={() => setExpandedServiceId(expandedServiceId === service.service_id ? null : service.service_id)}
-                                                        className="p-2 rounded-full text-gray-500 hover:bg-gray-200 ml-2 flex-shrink-0"
-                                                    >
-                                                        {expandedServiceId === service.service_id ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {expandedServiceId === service.service_id && (
-                                            <div className="mt-4 pt-4 border-t border-gray-200">
-                                                <label htmlFor={`symptoms-${service.service_id}`} className="block text-gray-700 text-sm font-semibold mb-2">
-                                                    อาการเบื้องต้น:
-                                                </label>
-                                                <textarea
-                                                    id={`symptoms-${service.service_id}`}
-                                                    className="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition duration-200"
-                                                    rows="3"
-                                                    value={symptoms}
-                                                    onChange={(e) => setSymptoms(e.target.value)}
-                                                    placeholder="กรุณาอธิบายอาการเบื้องต้นของคุณ"
-                                                    required
-                                                ></textarea>
-                                                <Button 
-                                                    variant="success" 
-                                                    className="w-full mt-4"
-                                                    onClick={() => handleServiceSelect(service)}
-                                                >
-                                                    เลือกบริการนี้
-                                                </Button>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))
-                            ) : (
-                                <p className="col-span-full text-center text-gray-500">ไม่พบข้อมูลบริการ</p>
-                            )}
-                        </div>
-                        <div className="flex justify-end mt-6 sm:mt-8">
-                            <Button 
-                                variant="primary" 
-                                onClick={handleNextStep} 
-                                disabled={!selectedService || !symptoms.trim()}
-                                className="w-full sm:w-auto"
-                            >
-                                ถัดไป <span className="ml-2">&rarr;</span>
-                            </Button>
-                        </div>
-                    </>
-                );
-
-            case 2: // Select Date and Time
-                return (
-                    <>
-                        <h3 className="text-xl sm:text-2xl font-semibold text-primary-default mb-4 sm:mb-6">2. เลือกวันและเวลาสำหรับ "{selectedService?.service_name}"</h3>
-                        
-                        <div className="mb-6">
-                            <label htmlFor="appointmentDate" className="block text-gray-700 text-sm font-semibold mb-2">เลือกวันนัดหมาย:</label>
-                            <input
-                                type="date"
-                                id="appointmentDate"
-                                className="shadow-sm appearance-none border rounded w-full py-3 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition duration-200"
-                                value={selectedDate}
-                                onChange={(e) => setSelectedDate(e.target.value)}
-                                min={new Date().toISOString().split('T')[0]} // Cannot select past dates
-                            />
-                        </div>
-
-                        {selectedDate && availableTimeBlocks.length > 0 ? (
-                            <div className="mb-6">
-                                <h4 className="text-base sm:text-lg font-semibold text-primary-default mb-3 sm:mb-4">Slot เวลาที่ว่างสำหรับ {getFormattedDate(selectedDate)}:</h4>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                                    {availableTimeBlocks.map(block => (
-                                        console.log('Available time block:', block),
-                                        <button
-                                            key={`${block.slot_start}-${block.slot_end}`}
-                                            onClick={() => handleTimeBlockSelect(block)} 
-                                            className={`p-3 sm:p-4 rounded-lg border-2 text-center transition-all duration-200 min-h-[80px] flex flex-col justify-center
-                                                ${selectedTimeBlock?.slot_start === block.slot_start && selectedTimeBlock?.slot_end === block.slot_end ? 'bg-secondary-default text-white border-secondary-default shadow-lg' : 'bg-white text-gray-800 border-gray-300 hover:bg-secondary-light hover:border-secondary-default'}`}
-                                        >
-                                            <span className="font-medium text-base sm:text-lg block">{block.slot_start.slice(0, 5)} - {block.slot_end.slice(0, 5)}</span>
-                                            <span className="text-xs sm:text-sm mt-1">ว่าง: {block.total_available_slots_in_time_block} คิว</span> 
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        ) : selectedDate && !loading && (
-                            <p className="text-center text-gray-500 mb-6 text-sm sm:text-base">ไม่มี Slot เวลาที่ว่างสำหรับบริการ "{selectedService?.service_name}" ในวันที่ {getFormattedDate(selectedDate)}</p>
-                        )}
-
-                        <div className="flex flex-col sm:flex-row justify-between gap-3 mt-6 sm:mt-8">
-                            <Button variant="secondary" onClick={handlePrevStep} className="w-full sm:w-auto order-2 sm:order-1">
-                                &larr; ย้อนกลับ
-                            </Button>
-                            <Button 
-                                variant="primary" 
-                                onClick={handleNextStep} 
-                                disabled={!selectedDate || !selectedTimeBlock}
-                                className="w-full sm:w-auto order-1 sm:order-2"
-                            >
-                                ถัดไป <span className="ml-2">&rarr;</span>
-                            </Button>
-                        </div>
-                    </>
-                );
-            case 3: // Waiting for Approval
-                return (
-                    <div className="text-center bg-white p-6 sm:p-8 rounded-xl shadow-lg">
-                        <CheckCircle size={60} className="text-green-500 mx-auto mb-4 sm:mb-6 sm:w-20 sm:h-20" />
-                        <h3 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-3 sm:mb-4">นัดหมายสำเร็จ!</h3>
-                        <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">นัดหมายของคุณกำลังรอการตอบกลับจากพยาบาล</p>
-                        {finalBookingDetails && (
-                            <div className="bg-stromboli-50 p-4 rounded-lg text-left mb-4 sm:mb-6">
-                                <h4 className="font-semibold text-base sm:text-lg text-secondary-default mb-2">รายละเอียดนัดหมายของคุณ:</h4>
-                                <div className="space-y-1 text-sm sm:text-base">
-                                    <p><span className="font-medium">บริการ:</span> {finalBookingDetails.serviceName}</p>
-                                    <p><span className="font-medium">วันนัด:</span> {getFormattedDate(finalBookingDetails.appointmentDate)}</p>
-                                    <p><span className="font-medium">เวลา:</span> {finalBookingDetails.appointmentTime.slice(0,5)} - {finalBookingDetails.slotEnd.slice(0,5)} น.</p>
-                                    <p><span className="font-medium">อาการเบื้องต้น:</span> {finalBookingDetails.symptoms}</p>
-                                </div>
-                            </div>
-                        )}
-                        <Button 
-                            variant="secondary" 
-                            onClick={navigateToMyAppointments} 
-                            className="w-full sm:w-auto"
-                        >
-                            <CalendarDays size={18} className="inline-block mr-2" />
-                            ดูนัดหมายของฉัน
-                        </Button>
-                    </div>
-                );
-            default:
-                return null;
-        }
-    };
-
-    return (
-        <div className='flex flex-col items-center min-h-screen px-4 sm:px-6 lg:px-8 py-6 sm:py-10 mt-24 sm:mt-24'>
-            <div className="w-full max-w-4xl">
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-primary-default mb-6 sm:mb-8 text-center">สร้างนัดหมายของคุณ</h2>
-                
-                {/* Progress Indicators */}
-                <div className="flex justify-between items-center w-full mt-10 mb-6 sm:mb-10">
-                    <div className={`flex flex-col items-center flex-1 ${step >= 1 ? 'text-primary-default' : 'text-gray-400'}`}>
-                        <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-white text-sm sm:text-base ${step >= 1 ? 'bg-primary-default' : 'bg-stromboli-100'}`}>1</div>
-                        <span className="mt-2 text-xs sm:text-sm text-center px-1">เลือกบริการ</span>
-                    </div>
-                    <div className="flex-1 border-b-2 border-gray-300 mx-1 sm:mx-2" style={{marginTop: '1rem'}}></div>
-                    <div className={`flex flex-col items-center flex-1 ${step >= 2 ? 'text-primary-default' : 'text-gray-400'}`}>
-                        <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-white text-sm sm:text-base ${step >= 2 ? 'bg-primary-default' : 'bg-stromboli-100'}`}>2</div>
-                        <span className="mt-2 text-xs sm:text-sm text-center px-1">เลือกวันและเวลา</span>
-                    </div>
-                    <div className="flex-1 border-b-2 border-gray-300 mx-1 sm:mx-2" style={{marginTop: '1rem'}}></div>
-                    <div className={`flex flex-col items-center flex-1 ${step >= 3 ? 'text-primary-default' : 'text-gray-400'}`}>
-                        <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-white text-sm sm:text-base ${step >= 3 ? 'bg-primary-default' : 'bg-stromboli-100'}`}>3</div>
-                        <span className="mt-2 text-xs sm:text-sm text-center px-1">รอการตอบกลับ</span>
-                    </div>
-                </div>
-                
-                {/* Content */}
-                <div className="bg-white p-4 sm:p-6 lg:p-8 w-full min-h-[400px] sm:min-h-[500px] rounded-lg shadow-sm">
-                    {renderStepContent()}
-                </div>
-            </div>
-
-            {/* Confirmation Modal */}
-            <Popup
-                isOpen={showConfirmPopup}
-                onClose={handleCancelBookingPopup}
-                title="ยืนยันการจองนัดหมาย"
-            >
-                <div className="p-3 sm:p-4">
-                    <p className="mb-4 text-gray-700 text-sm sm:text-base">คุณต้องการยืนยันการจองนัดหมายนี้หรือไม่?</p>
-                    {finalBookingDetails && (
-                        <div className="bg-stromboli-50 p-3 sm:p-4 rounded-lg text-left text-gray-800">
-                            <h4 className="font-semibold text-base sm:text-lg text-secondary-default mb-2">รายละเอียด:</h4>
-                            <div className="space-y-1 text-sm sm:text-base">
-                                <p><span className="font-medium">บริการ:</span> {finalBookingDetails.serviceName}</p>
-                                <p><span className="font-medium">วันนัด:</span> {getFormattedDate(finalBookingDetails.appointmentDate)}</p>
-                                <p><span className="font-medium">เวลา:</span> {finalBookingDetails.appointmentTime.slice(0,5)} - {finalBookingDetails.slotEnd.slice(0,5)} น.</p>
-                                <p><span className="font-medium">อาการเบื้องต้น:</span> {finalBookingDetails.symptoms}</p>
-                            </div>
-                        </div>
-                    )}
-                    <div className="flex flex-col sm:flex-row justify-end gap-3 mt-4 sm:mt-6">
-                        <Button variant="secondary" onClick={handleCancelBookingPopup} className="w-full sm:w-auto order-2 sm:order-1">ยกเลิก</Button>
-                        <Button variant="success" onClick={handleConfirmBooking} className="w-full sm:w-auto order-1 sm:order-2">ยืนยันการจอง</Button>
-                    </div>
-                </div>
-            </Popup>
+  // Render logic based on steps
+  const renderStepContent = () => {
+    if (loading || authLoading) {
+      return <div className="text-center py-8">กำลังโหลด...</div>;
+    }
+    if (error) {
+      return (
+        <div
+          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-4"
+          role="alert"
+        >
+          <span className="block sm:inline">{error}</span>
         </div>
-    );
+      );
+    }
+    if (message) {
+      return (
+        <div
+          className="bg-green-50 border border-green-500 text-green-700 px-4 py-3 rounded-lg relative mb-4"
+          role="alert"
+        >
+          <span className="block sm:inline">{message}</span>
+        </div>
+      );
+    }
+
+    switch (step) {
+      case 1: // Select Service
+        return (
+          <>
+            <h3 className="text-xl sm:text-2xl font-semibold text-primary-default mb-4 sm:mb-6">
+              1. เลือกบริการที่คุณต้องการ
+            </h3>
+            <div className="grid gap-4 sm:gap-6 lg:gap-8">
+              {services.length > 0 ? (
+                services.map((service) => (
+                  <div
+                    key={service.service_id}
+                    className={`bg-white rounded-xl p-4 sm:p-6 border-2 transition-all duration-300
+                                            ${
+                                              selectedService &&
+                                              selectedService.service_id ===
+                                                service.service_id
+                                                ? "border-stromboli-400"
+                                                : "border-gray-200 hover:border-stromboli-300"
+                                            }`}
+                  >
+                    <div className="flex flex-col sm:flex-row justify-between items-start mb-4 gap-4">
+                      <div className="flex-shrink-0 w-full sm:w-40 md:w-56">
+                        <img
+                          src={`../../assets/${service.img_path}`}
+                          alt={service.service_name}
+                          className="w-full h-32 object-cover rounded-lg shadow-sm"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src =
+                              "https://placehold.co/80x80/cccccc/ffffff?text=No+Img";
+                          }}
+                        />
+                      </div>
+                      <div className="flex-grow w-full sm:w-auto">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-grow">
+                            <h4 className="text-lg sm:text-xl font-bold text-primary-default">
+                              {service.service_name}
+                            </h4>
+                            <p className="text-sm text-gray-600 mb-2 line-clamp-2 sm:line-clamp-none">
+                              {service.description}
+                            </p>
+                            <p className="text-lg font-bold text-secondary-default">
+                              {service.price} THB
+                            </p>
+                          </div>
+                          <button
+                            onClick={() =>
+                              setExpandedServiceId(
+                                expandedServiceId === service.service_id
+                                  ? null
+                                  : service.service_id
+                              )
+                            }
+                            className="p-2 rounded-full text-gray-500 hover:bg-gray-200 ml-2 flex-shrink-0"
+                          >
+                            {expandedServiceId === service.service_id ? (
+                              <ChevronUp size={20} />
+                            ) : (
+                              <ChevronDown size={20} />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    {expandedServiceId === service.service_id && (
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <label
+                          htmlFor={`symptoms-${service.service_id}`}
+                          className="block text-gray-700 text-sm font-semibold mb-2"
+                        >
+                          อาการเบื้องต้น:
+                        </label>
+                        <textarea
+                          id={`symptoms-${service.service_id}`}
+                          className="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-1 focus:ring-gray-200  hover:border-gray-300 focus:border-transparent transition duration-200"
+                          rows="3"
+                          value={symptoms}
+                          onChange={(e) => setSymptoms(e.target.value)}
+                          placeholder="กรุณาอธิบายอาการเบื้องต้นของคุณ"
+                          required
+                        ></textarea>
+                        <Button
+                          variant="success"
+                          className="w-full mt-4"
+                          onClick={() => handleServiceSelect(service)}
+                        >
+                          เลือกบริการนี้
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <p className="col-span-full text-center text-gray-500">
+                  ไม่พบข้อมูลบริการ
+                </p>
+              )}
+            </div>
+            <div className="flex justify-end mt-6 sm:mt-8">
+              <Button
+                variant="primary"
+                onClick={handleNextStep}
+                disabled={!selectedService || !symptoms.trim()}
+                className="w-full sm:w-auto"
+              >
+                ถัดไป <span className="ml-2">&rarr;</span>
+              </Button>
+            </div>
+          </>
+        );
+
+      case 2: // Select Date and Time
+        return (
+          <>
+            <h3 className="text-xl sm:text-2xl font-semibold text-primary-default mb-4 sm:mb-6">
+              2. เลือกวันและเวลาสำหรับ "{selectedService?.service_name}"
+            </h3>
+
+            <div className="mb-6">
+              <label
+                htmlFor="appointmentDate"
+                className="block text-gray-700 text-sm font-semibold mb-2"
+              >
+                เลือกวันนัดหมาย:
+              </label>
+              <input
+                type="date"
+                id="appointmentDate"
+                className="shadow-sm appearance-none border rounded w-full py-3 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-secondary-default focus:border-secondary-default focus:border-transparent hover:border-secondary-default transition duration-200"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                min={getMinSelectableDate()} // เช็คเวลาปัจจุบันก่อน input data
+                max={getMaxSelectableDate()} // เช็ควันสูงสุดที่สามารถจองได้
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-2 mb-8">
+              สามารถจองได้ตั้งแต่วันที่{" "}
+              <span className="font-medium text-secondary-default">
+                {new Date(getMinSelectableDate()).toLocaleDateString("th-TH", {
+                  day: "numeric",
+                  month: "long",
+                  year: "2-digit",
+                })}
+              </span>{" "}
+              ถึง{" "}
+              <span className="font-medium text-secondary-default">
+                {new Date(getMaxSelectableDate()).toLocaleDateString("th-TH", {
+                  day: "numeric",
+                  month: "long",
+                  year: "2-digit",
+                })}
+              </span>
+            </p>
+
+            {selectedDate && availableTimeBlocks.length > 0 ? (
+              <div className="mb-6">
+                <h4 className="text-base sm:text-lg font-semibold text-primary-default mb-3 sm:mb-4">
+                  Slot เวลาที่ว่างสำหรับ {getFormattedDate(selectedDate)}:
+                </h4>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {availableTimeBlocks.map((block) => {
+                    const now = systemDate
+                    const next24h = new Date(
+                      systemDate.getTime() + 24 * 60 * 60 * 1000
+                    );
+                    const blockStart = new Date(
+                      `${selectedDate}T${block.slot_start}`
+                    );
+
+                    const isDisabled = blockStart < next24h; // ถ้าเร็วกว่า 24 ชม. ให้ disable
+
+                    return (
+                      <button
+                        key={`${block.slot_start}-${block.slot_end}`}
+                        onClick={() =>
+                          !isDisabled && handleTimeBlockSelect(block)
+                        }
+                        disabled={isDisabled}
+                        title={
+                          isDisabled
+                            ? "ต้องจองล่วงหน้าอย่างน้อย 24 ชั่วโมง"
+                            : ""
+                        }
+                        className={`p-3 sm:p-4 rounded-lg border-2 text-center transition-all duration-200 min-h-[80px] flex flex-col justify-center
+                            ${
+                              isDisabled
+                                ? "bg-gray-200 text-gray-400 border-gray-300 cursor-not-allowed"
+                                : selectedTimeBlock?.slot_start ===
+                                    block.slot_start &&
+                                  selectedTimeBlock?.slot_end === block.slot_end
+                                ? "bg-secondary-default text-white border-secondary-default shadow-lg"
+                                : "bg-white text-gray-800 border-gray-300 hover:bg-secondary-light hover:border-secondary-default"
+                            }`}
+                      >
+                        <span className="font-medium text-base sm:text-lg block">
+                          {block.slot_start.slice(0, 5)} -{" "}
+                          {block.slot_end.slice(0, 5)}
+                        </span>
+                        <span className="text-xs sm:text-sm mt-1">
+                          ว่าง: {block.total_available_slots_in_time_block} คิว
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              selectedDate &&
+              !loading && (
+                <p className="text-center text-gray-500 mb-6 text-sm sm:text-base">
+                  ไม่มี Slot เวลาที่ว่างสำหรับบริการ "
+                  {selectedService?.service_name}" ในวันที่{" "}
+                  {getFormattedDate(selectedDate)}
+                </p>
+              )
+            )}
+
+            <div className="flex flex-col sm:flex-row justify-between gap-3 mt-6 sm:mt-8">
+              <Button
+                variant="secondary"
+                onClick={handlePrevStep}
+                className="w-full sm:w-auto order-2 sm:order-1 bg-primary-opa"
+              >
+                &larr; ย้อนกลับ
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleNextStep}
+                disabled={!selectedDate || !selectedTimeBlock}
+                className="w-full sm:w-auto order-1 sm:order-2"
+              >
+                ถัดไป <span className="ml-2">&rarr;</span>
+              </Button>
+            </div>
+          </>
+        );
+      case 3: // Waiting for Approval
+        return (
+          <div className="text-center bg-white p-6 sm:p-8 rounded-xl shadow-lg">
+            <CheckCircle
+              size={60}
+              className="text-green-500 mx-auto mb-4 sm:mb-6 sm:w-20 sm:h-20"
+            />
+            <h3 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-3 sm:mb-4">
+              นัดหมายสำเร็จ!
+            </h3>
+            <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
+              นัดหมายของคุณกำลังรอการตอบกลับจากพยาบาล
+            </p>
+            {finalBookingDetails && (
+              <div className="bg-stromboli-50 p-4 rounded-lg text-left mb-4 sm:mb-6">
+                <h4 className="font-semibold text-base sm:text-lg text-secondary-default mb-2">
+                  รายละเอียดนัดหมายของคุณ:
+                </h4>
+                <div className="space-y-1 text-sm sm:text-base">
+                  <p>
+                    <span className="font-medium">บริการ:</span>{" "}
+                    {finalBookingDetails.serviceName}
+                  </p>
+                  <p>
+                    <span className="font-medium">วันนัด:</span>{" "}
+                    {getFormattedDate(finalBookingDetails.appointmentDate)}
+                  </p>
+                  <p>
+                    <span className="font-medium">เวลา:</span>{" "}
+                    {finalBookingDetails.appointmentTime.slice(0, 5)} -{" "}
+                    {finalBookingDetails.slotEnd.slice(0, 5)} น.
+                  </p>
+                  <p>
+                    <span className="font-medium">อาการเบื้องต้น:</span>{" "}
+                    {finalBookingDetails.symptoms}
+                  </p>
+                </div>
+              </div>
+            )}
+            <Button
+              variant="secondary"
+              onClick={navigateToMyAppointments}
+              className="w-full sm:w-auto"
+            >
+              <CalendarDays size={18} className="inline-block mr-2" />
+              ดูนัดหมายของฉัน
+            </Button>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center min-h-screen px-4 sm:px-6 lg:px-8 py-6 sm:py-10 mt-24 sm:mt-24">
+      <div className="w-full max-w-4xl">
+        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-primary-default mb-6 sm:mb-8 text-center">
+          สร้างนัดหมายของคุณ
+        </h2>
+
+        {/* Progress Indicators */}
+        <div className="flex justify-between items-center w-full mt-10 mb-6 sm:mb-10">
+          <div
+            className={`flex flex-col items-center flex-1 ${
+              step >= 1 ? "text-primary-default" : "text-gray-400"
+            }`}
+          >
+            <div
+              className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-white text-sm sm:text-base ${
+                step >= 1 ? "bg-primary-default" : "bg-stromboli-100"
+              }`}
+            >
+              1
+            </div>
+            <span className="mt-2 text-xs sm:text-sm text-center px-1">
+              เลือกบริการ
+            </span>
+          </div>
+          <div
+            className="flex-1 border-b-2 border-gray-300 mx-1 sm:mx-2"
+            style={{ marginTop: "1rem" }}
+          ></div>
+          <div
+            className={`flex flex-col items-center flex-1 ${
+              step >= 2 ? "text-primary-default" : "text-gray-400"
+            }`}
+          >
+            <div
+              className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-white text-sm sm:text-base ${
+                step >= 2 ? "bg-primary-default" : "bg-stromboli-100"
+              }`}
+            >
+              2
+            </div>
+            <span className="mt-2 text-xs sm:text-sm text-center px-1">
+              เลือกวันและเวลา
+            </span>
+          </div>
+          <div
+            className="flex-1 border-b-2 border-gray-300 mx-1 sm:mx-2"
+            style={{ marginTop: "1rem" }}
+          ></div>
+          <div
+            className={`flex flex-col items-center flex-1 ${
+              step >= 3 ? "text-primary-default" : "text-gray-400"
+            }`}
+          >
+            <div
+              className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-white text-sm sm:text-base ${
+                step >= 3 ? "bg-primary-default" : "bg-stromboli-100"
+              }`}
+            >
+              3
+            </div>
+            <span className="mt-2 text-xs sm:text-sm text-center px-1">
+              รอการตอบกลับ
+            </span>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="bg-white p-4 sm:p-6 lg:p-8 w-full min-h-[400px] sm:min-h-[500px] rounded-lg shadow-sm">
+          {renderStepContent()}
+        </div>
+      </div>
+
+      {/* Confirmation Modal */}
+      <Popup
+        isOpen={showConfirmPopup}
+        onClose={handleCancelBookingPopup}
+        title="ยืนยันการจองนัดหมาย"
+      >
+        <div className="p-3 sm:p-4">
+          <p className="mb-4 text-secondary-default text-sm sm:text-base font-semibold">
+            โปรดอ่าน
+          </p>
+          <p className="mb-4 text-gray-700 text-sm sm:text-base">
+            หากยกเลิกนัดหมายหรือไม่กดยืนยันเข้ารับการรักษาก่อนถึงวันเข้ารับบริการเกิน <span className="font-semibold">3</span> ครั้งจะถูกล็อกบัญชี
+          </p>
+          <p className="mb-4 text-gray-700 text-sm sm:text-base">
+            คุณต้องการยืนยันการจองนัดหมายนี้หรือไม่?
+          </p>
+          {finalBookingDetails && (
+            <div className="bg-stromboli-50 p-3 sm:p-4 rounded-lg text-left text-gray-800">
+              <h4 className="font-semibold text-base sm:text-lg text-secondary-default mb-2">
+                รายละเอียด:
+              </h4>
+              <div className="space-y-1 text-sm sm:text-base">
+                <p>
+                  <span className="font-medium">บริการ:</span>{" "}
+                  {finalBookingDetails.serviceName}
+                </p>
+                <p>
+                  <span className="font-medium">วันนัด:</span>{" "}
+                  {getFormattedDate(finalBookingDetails.appointmentDate)}
+                </p>
+                <p>
+                  <span className="font-medium">เวลา:</span>{" "}
+                  {finalBookingDetails.appointmentTime.slice(0, 5)} -{" "}
+                  {finalBookingDetails.slotEnd.slice(0, 5)} น.
+                </p>
+                <p>
+                  <span className="font-medium">อาการเบื้องต้น:</span>{" "}
+                  {finalBookingDetails.symptoms}
+                </p>
+              </div>
+            </div>
+          )}
+          <div className="flex flex-col sm:flex-row justify-end gap-3 mt-4 sm:mt-6">
+            <Button
+              variant="secondary"
+              onClick={handleCancelBookingPopup}
+              className="w-full sm:w-auto order-2 sm:order-1 bg-primary-opa hover:bg-stromboli-400"
+            >
+              ยกเลิก
+            </Button>
+            <Button
+              variant="success"
+              onClick={handleConfirmBooking}
+              className="w-full sm:w-auto order-1 sm:order-2"
+            >
+              ยืนยันการจอง
+            </Button>
+          </div>
+        </div>
+      </Popup>
+    </div>
+  );
 };
 
 export default AppoinmentBooking;
