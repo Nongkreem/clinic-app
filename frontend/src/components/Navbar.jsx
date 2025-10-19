@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Home, CalendarPlus, ClipboardList, CalendarDays } from "lucide-react";
+import { Home, CalendarPlus, ClipboardList, CalendarDays, FileText } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 const Navbar = () => {
@@ -32,22 +32,28 @@ const Navbar = () => {
       path: "/patient/landing",
     },
     {
-      id: "create",
-      label: "สร้างนัดหมาย",
-      icon: <CalendarPlus size={20} />,
-      path: "/patient/create-appointment",
-    },
-    {
       id: "assessment",
       label: "ทำแบบประเมิน",
       icon: <ClipboardList size={20} />,
       path: "/patient/assessment",
     },
     {
+      id: "create",
+      label: "สร้างนัดหมาย",
+      icon: <CalendarPlus size={20} />,
+      path: "/patient/create-appointment",
+    },
+    {
       id: "my-appointment",
       label: "นัดหมายของฉัน",
       icon: <CalendarDays size={20} />,
       path: "/patient/my-appointment",
+    },
+    {
+      id: "my-appointment",
+      label: "ใบรับรองแพทย์",
+      icon: <FileText size={20} />,
+      path: "/patient/e-certmed",
     },
   ];
 
@@ -102,7 +108,7 @@ const Navbar = () => {
       </header>
 
       {/* Mobile Navbar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 h-[60px] flex items-center justify-between px-4 z-50">
+      <div className="bg-white lg:hidden fixed top-0 left-0 right-0 h-[60px] flex items-center justify-between px-4 pt-6 z-50">
         {/* โลโก้มุมซ้ายบน */}
         <div
           className="cursor-pointer flex items-center"
@@ -111,26 +117,25 @@ const Navbar = () => {
           <img
             src="/assets/logo.png"
             alt="Clinic Logo"
-            className="w-[100px] h-auto object-contain"
+            className="w-[54px] h-auto object-contain"
           />
         </div>
 
-        {/* ปุ่มออกจากระบบ (ถ้ามี) */}
         {isAuthenticated && (
           <button
             onClick={() => {
               logout();
               navigate("/landing");
             }}
-            className="text-sm text-red-500"
+            className="text-sm text-gray-500"
           >
-            ออก
+            ออกจากระบบ
           </button>
         )}
       </div>
 
       {/* Bottom Navbar */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-300 shadow-lg flex justify-around py-2">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50  bg-white/40 backdrop-blur-md flex justify-around py-2">
         {menuItems.map((item) => (
           <button
             key={item.id}

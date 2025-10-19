@@ -1,5 +1,4 @@
 const db = require('../config/db');
-
 exports.createFromAppointment = async ({ appointment_id, doctor_id, reason, other_notes }) => {
   const conn = await db.getConnection();
   try {
@@ -131,14 +130,15 @@ exports.listForDoctor = async (doctor_id, { fromDate, toDate }) => {
 };
 
 exports.listForPatient = async (patient_id) => {
+    const baseUrl = process.env.BASE_URL || "http://localhost:5001"; // fallback กันไว้
   const [rows] = await db.execute(
-    `SELECT mc.cert_id, mc.issued_at, mc.reason, mc.status,
+    `SELECT mc.cert_id, mc.issued_at, mc.reason, mc.other_notes, mc.status, CONCAT(?, mc.pdf_path) AS public_url,
             d.full_name AS doctor_full_name
      FROM medical_certificate mc
      JOIN doctors d ON mc.doctor_id = d.doctor_id
      WHERE mc.patient_id = ?
      ORDER BY mc.issued_at DESC`,
-    [patient_id]
+    [baseUrl,patient_id]
   );
   return rows;
 };

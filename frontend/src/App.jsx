@@ -2,8 +2,6 @@
 import React from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 
 // Layouts
 import TopNavbarLayout from "./layouts/TopNavbarLayout.jsx";
@@ -39,7 +37,7 @@ import MyAppointment from "./pages/patient/MyAppointment.jsx";
 import Landing from "./pages/Landing.jsx";
 import SymptomAssessment from "./pages/patient/SymptomAsessment.jsx";
 import Terms from "./pages/patient/Terms.jsx";
-
+import MedicalCertificate from "./pages/patient/MedicalCertificate.jsx";
 // Specific Pages for Nurse
 import NurseDashboard from "./pages/nurse/NurseDashboard";
 import AppointmentReqManage from "./pages/nurse/AppointmentReqManage.jsx";
@@ -119,6 +117,8 @@ function App() {
           />
           <Route path="/patient/my-appointment" element={<MyAppointment />} />
           <Route path="/patient/assessment" element={<SymptomAssessment />} />
+          <Route path="/patient/e-certmed" element={<MedicalCertificate />} />
+          
         </Route>
 
         {/* Staff Dashboard Layout - Protected */}

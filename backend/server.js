@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+// import demoRoutes from "./routes/demoRoutes.js";
 
 const path = require('path');
 const db = require('./config/db');
@@ -8,24 +9,25 @@ const db = require('./config/db');
 const app = express();
 const port = process.env.PORT || 5001;
 
+
 const corsOptions = {
   origin: 'http://localhost:5173', // frontend URL
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true
 };
 
-// ✅ 1. CORS ต้องมาก่อน
+// 1. CORS
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
-// ✅ 2. Body parser ต้องมาก่อน routes และ log
+// 2. Body parser ต้องมาก่อน routes และ log
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ 3. Static files
+// 3. Static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// ✅ 4. Log middleware (หลัง body parser)
+// 4. Log middleware (หลัง body parser)
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.originalUrl}`);
   if (req.body && Object.keys(req.body).length > 0) {
@@ -49,10 +51,12 @@ const precheckRoutes = require('./routes/precheckRoutes');
 const medicalRecordRoutes = require('./routes/medicalRecordRoutes');
 const medicalCertificateRoutes = require('./routes/medicalCertificateRoutes');
 const symptomAssessmentRoutes = require('./routes/symptomAssessmentRoutes');
-
+const demoRoutes = require("./routes/demoRoutes");
+const followUpRoutes = require("./routes/followUpRoutes");
+ 
 console.log("✅ AuthRoutes loaded from", require.resolve('./routes/authRoutes'));
 
-// ✅ Routes - เรียงจากเฉพาะเจาะจงไปทั่วไป
+// Routes - เรียงจากเฉพาะเจาะจงไปทั่วไป
 app.use('/api/auth', authRoutes);
 app.use('/api/guide', guideRoutes);
 app.use('/api/appointments', appointmentRoutes);
@@ -63,8 +67,9 @@ app.use('/api/precheck', precheckRoutes);
 app.use('/api/medical-record', medicalRecordRoutes);
 app.use('/api/medical-certificates', medicalCertificateRoutes);
 app.use('/api/symptom-assessment', symptomAssessmentRoutes);
+app.use('/api/demo', demoRoutes);
+app.use("/api/follow-up", followUpRoutes);
 
-// ⚠️ Generic routes ควรอยู่หลังสุด
 app.use('/api', serviceRoutes);
 app.use('/api', doctorRoutes);
 app.use('/api', clinicRoomRoutes);

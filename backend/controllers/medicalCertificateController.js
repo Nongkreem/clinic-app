@@ -27,10 +27,10 @@ exports.createFromAppointment = async (req, res) => {
     // เตรียมข้อมูล generate PDF
     const payload = {
       hospital: {
-        name: 'Vejnaree Clinic',
-        address: '123 Rasda Rd., Hatyai',
-        phone: '02-123-4567',
-        logoPath: path.join(__dirname, '..', 'assets', 'logo.png')  // ถ้ามี
+        name: 'โรงพยาบาลสงขลานครินทร์ เวชวิวัฒน์',
+        address: '15 ถ.กาญจนวณิชย์ ต.หาดใหญ่ อ.หาดใหญ่ สงขลา 90110',
+        phone: '074 - 451040',
+        logoPath: path.join(__dirname, '..', 'assets', 'logo2.png')
       },
       patient: result.patient,
       doctor: { doctor_id, full_name: result.doctor?.full_name || doctor_id },

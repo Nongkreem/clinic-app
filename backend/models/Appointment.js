@@ -299,11 +299,13 @@ exports.cancelAppointment = async (appointmentId, patientId) => {
   try {
     await connection.beginTransaction();
 
+    // ตรวจสอบว่านัดหมายนี้เป็นของผู้ป่วยคนนี้จริงไหม
     const [appointmentRows] = await connection.execute(
       `SELECT ers_id, status, appointment_date, appointment_time, patient_id
-             FROM appointment WHERE appointment_id = ? AND patient_id = ?`,
+       FROM appointment WHERE appointment_id = ? AND patient_id = ?`,
       [appointmentId, patientId]
     );
+
     if (appointmentRows.length === 0) {
       await connection.rollback();
       console.warn(
@@ -311,6 +313,7 @@ exports.cancelAppointment = async (appointmentId, patientId) => {
       );
       return false;
     }
+
     const {
       ers_id,
       status: currentStatus,
@@ -319,12 +322,14 @@ exports.cancelAppointment = async (appointmentId, patientId) => {
       patient_id: affectedPatientId,
     } = appointmentRows[0];
 
-    let incrementBlacklist = false;
+    // เพิ่ม flag ให้ "ทุกครั้งที่ผู้ป่วยกดยกเลิกเอง" ต้องถูกนับ
+    let incrementBlacklist = true;
+
+    // (ถ้าอยากเก็บ logic พิเศษเฉพาะ approved ก็เก็บได้)
+    // เช่น ถ้าเป็น approved และใกล้เวลานัดแล้ว → ให้แสดง log ว่ามีผลต่อ blacklist แน่นอน
     if (currentStatus === "approved") {
       const appointmentDateTime = new Date(
-        `${appointment_date
-          .toISOString()
-          .slice(0, 10)}T${appointment_time.slice(0, 8)}`
+        `${appointment_date.toISOString().slice(0, 10)}T${appointment_time.slice(0, 8)}`
       );
       const twentyFourHoursBeforeAppointment = new Date(
         appointmentDateTime.getTime() - 24 * 60 * 60 * 1000
@@ -332,40 +337,37 @@ exports.cancelAppointment = async (appointmentId, patientId) => {
       const currentTime = new Date();
 
       if (currentTime > twentyFourHoursBeforeAppointment) {
-        incrementBlacklist = true;
+        console.log(`[Appointment Model] Cancelled within 24 hours — will impact blacklist`);
       }
     }
 
+    // อัปเดตสถานะนัดหมาย
     const [updateAppointmentResult] = await connection.execute(
       `UPDATE appointment SET status = 'cancelled' WHERE appointment_id = ?`,
       [appointmentId]
     );
 
+    // คืน slot
     const [updateSlotResult] = await connection.execute(
       `UPDATE examRoomSlots SET is_booked = FALSE WHERE ers_id = ?`,
       [ers_id]
     );
 
+    // เพิ่มการนับ blacklist เสมอเมื่อผู้ป่วยกดยกเลิกเอง
+    let resultInfo = null;
     if (incrementBlacklist) {
-      const incrementResult = await Patient.incrementCancellationCount(
-        affectedPatientId
-      );
+      const incrementResult = await Patient.incrementCancellationCount(affectedPatientId);
       if (incrementResult && incrementResult.newCount !== undefined) {
         console.log(
           `[Appointment Model] Patient ${affectedPatientId} has ${incrementResult.newCount} cancellations`
         );
-        resultInfo = incrementResult; // ส่งต่อไปยัง controller เพื่อแจ้งผู้ป่วย
+        resultInfo = incrementResult;
       } else {
-        console.error(
-          `[Appointment Model] Failed to increment cancellation count for patient ${affectedPatientId}`
-        );
+        console.error(`[Appointment Model] Failed to increment cancellation count for patient ${affectedPatientId}`);
       }
     }
 
-    if (
-      updateAppointmentResult.affectedRows === 0 ||
-      updateSlotResult.affectedRows === 0
-    ) {
+    if (updateAppointmentResult.affectedRows === 0 || updateSlotResult.affectedRows === 0) {
       await connection.rollback();
       return false;
     }
@@ -374,7 +376,10 @@ exports.cancelAppointment = async (appointmentId, patientId) => {
     console.log(
       `[Appointment Model] Appointment ${appointmentId} cancelled for patient ${patientId}. Blacklist incremented: ${incrementBlacklist}`
     );
-    return true;
+
+    // ส่งข้อมูลกลับให้ controller เพื่อนำไปแจ้งผู้ใช้ใน toast
+    return resultInfo || true;
+
   } catch (error) {
     await connection.rollback();
     console.error("Error cancelling appointment:", error);
@@ -383,6 +388,7 @@ exports.cancelAppointment = async (appointmentId, patientId) => {
     connection.release();
   }
 };
+
 
 exports.incrementCancellationCount = async (patientId) => {
   const connection = await db.getConnection();
@@ -582,7 +588,17 @@ exports.createFollowUp = async ({
 }) => {
   const conn = await db.getConnection();
   try {
+    console.log("[DEBUG] ers_id:", ers_id);
     await conn.beginTransaction();
+
+    // ตรวจสอบวันและเวลาอย่างน้อย 24 ชั่วโมง
+    const selectedDateTime = new Date(`${appointment_date}T${appointment_time}`);
+    const now = new Date();
+    const diffHours = (selectedDateTime - now) / (1000 * 60 * 60);
+
+    if (diffHours < 24) {
+      throw new Error("ต้องนัดติดตามล่วงหน้าอย่างน้อย 24 ชั่วโมง");
+    }
 
     // ดึง patient จากนัดเดิม
     const [[oldAppt]] = await conn.execute(
