@@ -75,6 +75,7 @@ export default function SymptomAssessmentManager() {
   const saveAssessment = async () => {
     try {
       setSaving(true);
+      let total = 0
       // นับจำนวนทั้งหมด (เพื่อ progress)
       questions.forEach((q) => {
         total++;

@@ -60,6 +60,7 @@ router.delete(
   authorizeRole(['head_nurse']),
   ctrl.deleteChoice
 );
+// ดึงคะแนนของ choice หนึ่งรายการ
 
 // คะแนนต่อ service
 router.post(
@@ -73,6 +74,12 @@ router.delete(
   authenticateToken,
   authorizeRole(['head_nurse']),
   ctrl.deleteChoiceScore
+);
+router.get(
+  '/choice/:id/scores',
+  authenticateToken,
+  authorizeRole(['head_nurse', 'patient', 'doctor', 'nurse']),
+  ctrl.getChoiceScores
 );
 
 module.exports = router;

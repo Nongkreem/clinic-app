@@ -4,6 +4,8 @@ exports.createFromAppointment = async (req, res) => {
   try {
     const doctor_id = req.user.entity_id; // หมอที่ล็อกอิน
     const { appointment_id, diagnosis, treatment, note, follow_up_date } = req.body;
+    console.log("[DEBUG] req.body:", req.body);
+    console.log("[DBUG] req.user:", req.user);
 
     if (!appointment_id || !diagnosis || !treatment) {
       return res.status(400).json({ message: 'กรอกข้อมูลไม่ครบ' });

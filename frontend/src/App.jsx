@@ -20,7 +20,7 @@ import DiagnosisPage from "./pages/doctor/DiagnosisPage.jsx";
 import MedicalCertificatePage from "./pages/doctor/MedicalCertificatePage.jsx";
 
 // Specific Pages for Head Nurse
-import HeadNurseDashboard from "./pages/head-nurse/HeadNurseDashboard";
+import HeadNurseLayout from "./pages/head-nurse/HeadNurseLayout";
 import ServiceManage from "./pages/head-nurse/ServiceManage.jsx";
 import DoctorsManage from "./pages/head-nurse/DoctorsManage.jsx";
 import GuideManage from "./pages/head-nurse/GuideManage.jsx";
@@ -29,6 +29,7 @@ import DoctorScheduleManage from "./pages/head-nurse/DoctorScheduleManage.jsx";
 import NurseManage from "./pages/head-nurse/NurseManage.jsx";
 import SymptomQuestionManage from "./pages/head-nurse/SymptomQuestionManage.jsx";
 import NurseScheduleManage from "./pages/head-nurse/NurseScheduleManage.jsx";
+import HeadNurseDashboard from "./pages/head-nurse/HeadNurseDashboard.jsx";
 
 // Specific Pages for Patient
 import PatientDashboard from "./pages/patient/PatientDashboard";
@@ -145,7 +146,7 @@ function App() {
           </Route>
 
           {/* Head Nurse Routes */}
-          <Route path="/head_nurse" element={<HeadNurseDashboard />}>
+          <Route path="/head_nurse" element={<HeadNurseLayout />}>
             <Route path="services" element={<ServiceManage />} />
             <Route path="doctors" element={<DoctorsManage />} />
             <Route path="guide" element={<GuideManage />} />
@@ -157,6 +158,7 @@ function App() {
               path="symptom-question"
               element={<SymptomQuestionManage />}
             />
+            <Route path="dashboard" element={<HeadNurseDashboard/>}/>
           </Route>
         </Route>
 

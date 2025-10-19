@@ -110,9 +110,9 @@ const Login = () => {
         {/* ซ้าย: พื้นหลัง */}
         <div
           className="hidden lg:flex w-1/2 items-center justify-center bg-cover bg-center relative"
-          style={{ backgroundImage: "url('/assets/pelvic-surgery-unit.jpg')" }}
+          style={{ backgroundImage: "url('/assets/doctor-talking.jpg')" }}
         >
-          <div className="absolute inset-0 bg-gray-900 opacity-40"></div>
+          <div className="absolute inset-0 bg-stromboli-900/70"></div>
           <div className="relative text-white text-5xl font-bold drop-shadow-lg z-10">
             ยินดีต้อนรับ
           </div>

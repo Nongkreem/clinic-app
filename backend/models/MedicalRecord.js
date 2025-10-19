@@ -9,7 +9,7 @@ exports.createFromAppointment = async ({ appointment_id, doctor_id, diagnosis, t
     const [[appt]] = await conn.query(
       `SELECT a.appointment_id, a.patient_id
        FROM appointment a
-       WHERE a.appointment_id = ? AND a.status IN ('prechecked','approved','confirmed')`,
+       WHERE a.appointment_id = ? AND a.status IN ('prechecked','approved','confirmed', 'completed')`,
       [appointment_id]
     );
     if (!appt) {

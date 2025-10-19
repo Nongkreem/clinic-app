@@ -50,7 +50,7 @@ const Navbar = () => {
       path: "/patient/my-appointment",
     },
     {
-      id: "my-appointment",
+      id: "my-certificate",
       label: "ใบรับรองแพทย์",
       icon: <FileText size={20} />,
       path: "/patient/e-certmed",

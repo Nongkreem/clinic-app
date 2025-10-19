@@ -5,13 +5,6 @@ import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001';
 
-/**
- * Component สำหรับ Form เพิ่ม/แก้ไขคำแนะนำการเตรียมตัว
- * @param {Object} props - Props สำหรับ Component
- * @param {Object|null} props.initialData - ข้อมูลคำแนะนำเริ่มต้นสำหรับแก้ไข (null ถ้าเป็นการเพิ่มใหม่)
- * @param {function} props.onSaveSuccess - ฟังก์ชันที่จะถูกเรียกเมื่อบันทึกสำเร็จ
- * @param {function} props.onCancel - ฟังก์ชันที่จะถูกเรียกเมื่อยกเลิกการแก้ไข/เพิ่ม
- */
 const GuideForm = ({ initialData, onSaveSuccess, onCancel }) => {
   const [adviceText, setAdviceText] = useState('');
   const [loading, setLoading] = useState(false);

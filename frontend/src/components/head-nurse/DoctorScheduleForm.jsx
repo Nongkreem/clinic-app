@@ -58,16 +58,14 @@ const timesOverlap = (start1, end1, start2, end2) => {
     const s2 = parseTime(start2);
     const e2 = parseTime(end2);
 
-    // If any time is invalid, consider them not overlapping to prevent unexpected behavior
     if (s1 === -1 || e1 === -1 || s2 === -1 || e2 === -1) {
         return false;
     }
-
-    // Overlap condition: (Start1 < End2) AND (End1 > Start2)
     return s1 < e2 && e1 > s2;
 };
 
 
+// ===== Component หลัก =====
 const DoctorScheduleForm = ({ initialData, onSaveSuccess, onCancel }) => {
   const [selectedDayOfWeek, setSelectedDayOfWeek] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -434,181 +432,161 @@ const DoctorScheduleForm = ({ initialData, onSaveSuccess, onCancel }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-4" role="alert">
-          <span className="block sm:inline">{error}</span>
-        </div>
-      )}
-      {infoMessage && (
-        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg relative mb-4" role="alert">
-          <span className="block sm:inline">{infoMessage}</span>
-        </div>
-      )}
-
-      {!initialData && (
-        <>
-          <FormGroup
-            as="select"
-            label="เลือกวันในสัปดาห์"
-            id="selectedDayOfWeek"
-            name="selectedDayOfWeek"
-            value={selectedDayOfWeek}
-            onChange={(e) => setSelectedDayOfWeek(e.target.value)}
-            options={dayOfWeekOptions}
-            required
-            className="mb-4"
-          />
-          <FormGroup
-            label="วันที่เริ่มต้น (สำหรับตารางแบบประจำ)"
-            type="date"
-            id="startDate"
-            name="startDate"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            required
-            className="mb-4"
-          />
-          <FormGroup
-            label="วันที่สิ้นสุด (สำหรับตารางแบบประจำ)"
-            type="date"
-            id="endDate"
-            name="endDate"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            required
-            className="mb-4"
-          />
-          {selectedDayOfWeek && startDate && endDate && (
-            <p className="text-gray-600 text-sm mb-4">
-              ระบบจะสร้างตารางออกตรวจสำหรับทุกวัน **{dayOfWeekOptions.find(opt => opt.value === selectedDayOfWeek)?.label}**
-              ระหว่างวันที่ **{new Date(startDate).toLocaleDateString('th-TH')}** ถึง **{new Date(endDate).toLocaleDateString('th-TH')}**
-            </p>
-          )}
-        </>
-      )}
-
-      {initialData && (
-        <p className="text-gray-600 text-sm mb-4">
-          กำลังแก้ไขตารางออกตรวจสำหรับวันที่: {new Date(initialData.schedule_date).toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-        </p>
-      )}
-
-
-      <div className="mb-4">
-        <label className="block text-gray-700 text-sm font-bold mb-2">
-          รายละเอียดตารางออกตรวจ (สำหรับแต่ละวันในแบบประจำ) <span className="text-red-500">*</span>
-        </label>
-        <div className="max-h-96 overflow-y-auto pr-2"> 
-          {schedules.map((schedule, index) => (
-            <div key={schedule.tempId} className="relative flex flex-col md:flex-row items-end gap-2 mb-4 p-3 border rounded-lg bg-gray-50"> 
-              <div className="flex-grow grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                <FormGroup
-                  as="select"
-                  label="บริการ"
-                  id={`service-${schedule.tempId}`}
-                  name={`service-${schedule.tempId}`}
-                  value={schedule.serviceId}
-                  onChange={(e) => handleScheduleChange(schedule.tempId, 'serviceId', e.target.value)}
-                  options={allServiceOptions}
-                  required
-                  className="mb-0"
-                />
-                <FormGroup
-                  as="select"
-                  label="แพทย์"
-                  id={`doctor-${schedule.tempId}`}
-                  name={`doctor-${schedule.tempId}`}
-                  value={schedule.doctorId}
-                  onChange={(e) => handleScheduleChange(schedule.tempId, 'doctorId', e.target.value)}
-                  options={fetchedDoctorsByService[schedule.serviceId] || []}
-                  required
-                  className="mb-0"
-                  disabled={!schedule.serviceId}
-                />
-                <FormGroup
-                  as="select"
-                  label="ห้องตรวจ"
-                  id={`room-${schedule.tempId}`}
-                  name={`room-${schedule.tempId}`}
-                  value={schedule.roomId}
-                  onChange={(e) => handleScheduleChange(schedule.tempId, 'roomId', e.target.value)}
-                  options={fetchedRoomsByScheduleRow[schedule.tempId] || []} 
-                  required
-                  className="mb-0"
-                  disabled={!schedule.serviceId || !schedule.timeStart || !schedule.timeEnd} 
-                />
-                <FormGroup
-                  label="เวลาเริ่มต้น (08:00 - 16:00)"
-                  type="time"
-                  id={`timeStart-${schedule.tempId}`}
-                  name={`timeStart-${schedule.tempId}`}
-                  value={schedule.timeStart}
-                  onChange={(e) => handleScheduleChange(schedule.tempId, 'timeStart', e.target.value)}
-                  min="08:00"
-                  max="16:00"
-                  required
-                  className="mb-0"
-                />
-                <FormGroup
-                  label="เวลาสิ้นสุด (08:00 - 16:00)"
-                  type="time"
-                  id={`timeEnd-${schedule.tempId}`}
-                  name={`timeEnd-${schedule.tempId}`}
-                  value={schedule.timeEnd}
-                  onChange={(e) => handleScheduleChange(schedule.tempId, 'timeEnd', e.target.value)}
-                  min="08:00"
-                  max="16:00"
-                  required
-                  className="mb-0"
-                />
-              </div>
-              {schedules.length > 1 && (
-                <button 
-                  type="button"
-                  onClick={() => handleRemoveScheduleRow(schedule.tempId)}
-                  className="absolute top-2 right-2 h-6 w-6 flex items-center justify-center rounded-full bg-red-200 text-red-700 hover:bg-red-300 focus:outline-none focus:ring-2 focus:ring-red-400 text-xl font-bold"
-                  aria-label="ลบรายละเอียดตารางออกตรวจนี้" 
-                >
-                  -
-                </button>
-              )}
+    <div className="max-w-5xl mx-auto h-[calc(100vh-6rem)] flex flex-col p-2 sm:p-2 lg:p-8 overflow-hidden">
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col flex-1 overflow-hidden rounded-xl bg-white shadow"
+      >
+        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
+              {error}
             </div>
-          ))}
-        </div> 
+          )}
+          {infoMessage && (
+            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg">
+              {infoMessage}
+            </div>
+          )}
 
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={handleAddScheduleRow}
-          className="w-full flex items-center justify-center gap-2 mt-2"
-        >
-          <Plus size={18} />
-          เพิ่มรายละเอียดตาราง
-        </Button>
-        {schedules.length === 0 && (
-          <p className="text-red-500 text-xs mt-1">กรุณาเพิ่มรายละเอียดตารางออกตรวจอย่างน้อยหนึ่งรายการ</p>
-        )}
-      </div>
+          {/* ฟิลด์เลือกวัน */}
+          {!initialData && (
+            <>
+              <FormGroup
+                as="select"
+                label="เลือกวันในสัปดาห์"
+                id="selectedDayOfWeek"
+                name="selectedDayOfWeek"
+                value={selectedDayOfWeek}
+                onChange={(e) => setSelectedDayOfWeek(e.target.value)}
+                options={dayOfWeekOptions}
+                required
+              />
+              <FormGroup
+                label="วันที่เริ่มต้น"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                required
+              />
+              <FormGroup
+                label="วันที่สิ้นสุด"
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                required
+              />
+            </>
+          )}
 
-      <div className="flex space-x-2 mt-4 justify-end">
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={onCancel}
-          disabled={loading}
-        >
-          ยกเลิก
-        </Button>
-        <Button
-          type="submit"
-          variant={initialData ? 'primary' : 'success'}
-          disabled={loading}
-        >
-          {loading ? 'กำลังบันทึก...' : (initialData ? 'บันทึกการแก้ไข' : 'เพิ่มตารางออกตรวจ')}
-        </Button>
-      </div>
-    </form>
+          {/* รายละเอียดตารางออกตรวจ */}
+          <div>
+            <label className="block text-gray-700 font-bold mb-2">
+              รายละเอียดตารางออกตรวจ <span className="text-red-500">*</span>
+            </label>
+
+            <div className="space-y-4">
+              {schedules.map((s, index) => (
+                <div
+                  key={s.tempId}
+                  className="relative p-4 border rounded-lg bg-gray-50"
+                >
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <FormGroup
+                      as="select"
+                      label="บริการ"
+                      value={s.serviceId}
+                      onChange={(e) =>
+                        handleScheduleChange(s.tempId, 'serviceId', e.target.value)
+                      }
+                      options={allServiceOptions}
+                    />
+                    <FormGroup
+                      as="select"
+                      label="แพทย์"
+                      value={s.doctorId}
+                      onChange={(e) =>
+                        handleScheduleChange(s.tempId, 'doctorId', e.target.value)
+                      }
+                      options={fetchedDoctorsByService[s.serviceId] || []}
+                    />
+                    <FormGroup
+                      as="select"
+                      label="ห้องตรวจ"
+                      value={s.roomId}
+                      onChange={(e) =>
+                        handleScheduleChange(s.tempId, 'roomId', e.target.value)
+                      }
+                      options={fetchedRoomsByScheduleRow[s.tempId] || []}
+                    />
+                    <FormGroup
+                      label="เวลาเริ่มต้น"
+                      type="time"
+                      value={s.timeStart}
+                      onChange={(e) =>
+                        handleScheduleChange(s.tempId, 'timeStart', e.target.value)
+                      }
+                    />
+                    <FormGroup
+                      label="เวลาสิ้นสุด"
+                      type="time"
+                      value={s.timeEnd}
+                      onChange={(e) =>
+                        handleScheduleChange(s.tempId, 'timeEnd', e.target.value)
+                      }
+                    />
+                  </div>
+
+                  {schedules.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveScheduleRow(s.tempId)}
+                      className="absolute top-2 right-2 h-6 w-6 flex items-center justify-center rounded-full bg-red-200 text-red-700 hover:bg-red-300"
+                    >
+                      -
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleAddScheduleRow}
+              className="w-full mt-3 flex items-center justify-center gap-2"
+            >
+              <Plus size={18} /> เพิ่มรายละเอียดตาราง
+            </Button>
+          </div>
+        </div>
+
+        {/* ปุ่มด้านล่าง sticky */}
+        <div className="sticky bottom-0 z-10 bg-white/90 backdrop-blur-sm border-t px-4 py-3 flex flex-col sm:flex-row gap-2 justify-end">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onCancel}
+            disabled={loading}
+            className="w-full sm:w-auto"
+          >
+            ยกเลิก
+          </Button>
+          <Button
+            type="submit"
+            variant={initialData ? 'primary' : 'success'}
+            disabled={loading}
+            className="w-full sm:w-auto"
+          >
+            {loading
+              ? 'กำลังบันทึก...'
+              : initialData
+              ? 'บันทึกการแก้ไข'
+              : 'เพิ่มตารางออกตรวจ'}
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 };
 

@@ -53,7 +53,7 @@ const medicalCertificateRoutes = require('./routes/medicalCertificateRoutes');
 const symptomAssessmentRoutes = require('./routes/symptomAssessmentRoutes');
 const demoRoutes = require("./routes/demoRoutes");
 const followUpRoutes = require("./routes/followUpRoutes");
- 
+const dashboardRoutes = require("./routes/dashboardRoutes");
 console.log("✅ AuthRoutes loaded from", require.resolve('./routes/authRoutes'));
 
 // Routes - เรียงจากเฉพาะเจาะจงไปทั่วไป
@@ -69,6 +69,7 @@ app.use('/api/medical-certificates', medicalCertificateRoutes);
 app.use('/api/symptom-assessment', symptomAssessmentRoutes);
 app.use('/api/demo', demoRoutes);
 app.use("/api/follow-up", followUpRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 app.use('/api', serviceRoutes);
 app.use('/api', doctorRoutes);

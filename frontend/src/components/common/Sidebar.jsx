@@ -20,7 +20,7 @@ const menuByRole = {
   ],
   head_nurse: [
     { label: "คำแนะนำการเตรียมตัว", path: "/head_nurse/guide" },
-    { label: "ข้อมูลบริการ", path: "head_nurse/services" },
+    { label: "ข้อมูลบริการ", path: "/head_nurse/services" },
     { label: "ข้อมูลห้องตรวจ", path: "/head_nurse/examination-room" },
     { label: "ข้อมูลแพทย์", path: "/head_nurse/doctors" },
     {
@@ -35,6 +35,10 @@ const menuByRole = {
     {
       label: "จัดการแบบประเมินอาการ",
       path: "/head_nurse/symptom-question",
+    },
+    {
+      label: "รายงาน",
+      path: "/head_nurse/dashboard",
     },
   ],
 };

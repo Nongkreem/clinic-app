@@ -66,12 +66,19 @@ const DiagnosisSection = ({ appointment, onBack, onSaved }) => {
   }, [date]);
 
   const onPickBlock = (block) => {
+     const slotId = block.ers_ids_in_block
+    ? block.ers_ids_in_block.split(",")[0]  // แยกด้วย comma แล้วเลือก id ตัวแรก
+    : null;
+
+    console.log("Selected block:", block);
+    console.log("Selected slot ID:", slotId);
+
     if (selectedBlock?.slot_start === block.slot_start) {
       setSelectedBlock(null);
       setSelectedSlot(null);
     } else {
       setSelectedBlock(block);
-      setSelectedSlot(block.ers_ids_in_block?.[0] || null);
+      setSelectedSlot(slotId);
     }
   };
 

@@ -1,5 +1,5 @@
 const SymptomAssessment = require('../models/SymptomAssessment');
-
+const db = require("../config/db")
 // ========== Patient ==========
 exports.getQuestionnaire = async (req, res) => {
   try {
@@ -126,5 +126,22 @@ exports.deleteChoiceScore = async (req, res) => {
   } catch (err) {
     console.error('deleteChoiceScore error:', err);
     res.status(500).json({ message: 'ลบคะแนนไม่สำเร็จ' });
+  }
+};
+
+exports.getChoiceScores = async (req, res) => {
+  try {
+    const choice_id = req.params.id;
+    const [rows] = await db.execute(
+      `SELECT cs.choiceScore_id, cs.choice_id, cs.service_id, cs.score, s.service_name
+       FROM choiceScore cs
+       JOIN services s ON s.service_id = cs.service_id
+       WHERE cs.choice_id = ?`,
+      [choice_id]
+    );
+    res.status(200).json(rows);
+  } catch (err) {
+    console.error('getChoiceScores error:', err);
+    res.status(500).json({ message: 'ไม่สามารถดึงคะแนนของตัวเลือกนี้ได้' });
   }
 };
