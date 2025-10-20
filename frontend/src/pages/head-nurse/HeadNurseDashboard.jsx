@@ -12,7 +12,7 @@ const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5001"
 export default function HeadNurseDashboard() {
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-3xl font-semibold text-primary mb-6">
+      <h1 className="text-2xl font-bold text-primary-default mb-6">
         แดชบอร์ดภาพรวมคลินิก
       </h1>
 

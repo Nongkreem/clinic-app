@@ -13,12 +13,12 @@ router.post('/register', (req, res, next) => {
 });
 
 router.post('/check-blacklist', (req, res, next) => {
-  console.log('✅ /check-blacklist route hit!');
-  console.log('📦 Body:', req.body);
-  console.log('📦 HN:', req.body.hn);
+  console.log('/check-blacklist route hit!');
+  console.log('Body:', req.body);
+  console.log('HN:', req.body.hn);
   
   if (!authController.checkBlacklist) {
-    console.error('❌ authController.checkBlacklist is undefined!');
+    console.error('authController.checkBlacklist is undefined!');
     return res.status(500).json({ 
       success: false, 
       message: 'checkBlacklist function not found' 

@@ -51,3 +51,35 @@ exports.deleteNurse = async (req, res) => {
         res.status(500).json({ message: 'เกิดข้อผิดพลาดในการลบพยาบาล' });
       }
 }
+
+exports.updateNurse = async (req, res) => {
+  const { id } = req.params;
+  const { first_name, last_name, gmail, phone, service_id } = req.body;
+
+  if (!first_name || !last_name || !gmail || !service_id) {
+    return res.status(400).json({ message: 'ข้อมูลไม่ครบถ้วน' });
+  }
+
+  if (!gmail.endsWith('@vejnaree.ac.th')) {
+    return res.status(400).json({ message: 'อีเมลต้องลงท้ายด้วย @vejnaree.ac.th เท่านั้น' });
+  }
+
+  try {
+    const updated = await Nurse.updateNurse(id, {
+      first_name,
+      last_name,
+      gmail,
+      phone,
+      service_id,
+    });
+
+    if (updated) {
+      res.status(200).json({ message: 'อัปเดตข้อมูลพยาบาลสำเร็จ!' });
+    } else {
+      res.status(404).json({ message: 'ไม่พบข้อมูลพยาบาลที่ต้องการอัปเดต' });
+    }
+  } catch (error) {
+    console.error('Error in updateNurse controller:', error);
+    res.status(500).json({ message: 'เกิดข้อผิดพลาดในการอัปเดตข้อมูลพยาบาล' });
+  }
+};

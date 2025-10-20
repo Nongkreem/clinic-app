@@ -11,11 +11,6 @@ exports.createNurese = async ({ nurse_id, first_name, last_name, gmail, phone, s
       [nurse_id, first_name, last_name, gmail, phone || null, service_id]
     );
 
-    // await connection.execute(
-    //   'INSERT INTO user_accounts (email, password_hash, role, entity_id) VALUES (?, ?, ?, ?)',
-    //   [gmail, null, 'nurse', nurse_id]
-    // );
-
     await connection.commit();
     return { nurse_id, first_name, last_name, gmail, phone, service_id };
   } catch (error) {
@@ -59,3 +54,16 @@ exports.deleteNurse = async (nurse_id) => {
     throw error;
   }
 }
+
+
+exports.updateNurse = async (nurse_id, data) => {
+  const { first_name, last_name, gmail, phone, service_id } = data;
+  const [result] = await db.execute(
+    `UPDATE nurse 
+     SET first_name = ?, last_name = ?, gmail = ?, phone = ?, service_id = ?
+     WHERE nurse_id = ?`,
+    [first_name, last_name, gmail, phone, service_id, nurse_id]
+  );
+
+  return result.affectedRows > 0;
+};

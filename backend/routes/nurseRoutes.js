@@ -11,4 +11,12 @@ router.post('/', authenticateToken, authorizeRole(['head_nurse']), nurseControll
 router.get('/', authenticateToken, authorizeRole(['nurse', 'head_nurse']), nurseController.getAllNurses);
 
 router.delete('/:id', authenticateToken, authorizeRole(['nurse', 'head_nurse']), nurseController.deleteNurse);
+// สำหรับอัปเดตข้อมูลพยาบาล
+router.put(
+  '/:id',
+  authenticateToken,
+  authorizeRole(['head_nurse']),
+  nurseController.updateNurse
+);
+
 module.exports = router;

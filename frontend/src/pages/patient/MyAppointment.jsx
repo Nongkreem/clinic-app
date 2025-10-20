@@ -226,6 +226,37 @@ const MyAppointment = () => {
       setSelectedAppointmentId(null);
       setActionType("");
       setConfirmMessage("");
+
+      // ตรวจสอบสถานะ blacklist หลังทำรายการ
+      if (actionType === "cancel") {
+        try {
+          const statusRes = await axios.get(
+            `${API_BASE_URL}/api/patients/${patientId}/blacklist-status`,
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
+
+          if (statusRes.data.isBlacklisted) {
+            toast.error(
+              "บัญชีของคุณถูกระงับชั่วคราวเนื่องจากยกเลิกนัดครบ 3 ครั้ง",
+              {
+                autoClose: 5000,
+                theme: "colored",
+              }
+            );
+
+            localStorage.removeItem("token");
+            sessionStorage.clear();
+            if (typeof logout === "function") logout(false); // ป้องกันกรณี context มี redirect ภายใน
+            navigate("/login", { replace: true });
+          }
+        } catch (error) {
+          console.error("Error checking blacklist after cancel:", error);
+        }
+      }
     }
   };
 
@@ -631,6 +662,68 @@ const MyAppointment = () => {
               </div>
             </div>
           </Popup>
+          {/* Popup บัตรนัด */}
+          <Popup
+        isOpen={showAppointmentCardPopup}
+        onClose={handleCloseAppointmentCardPopup}
+        title="บัตรนัดหมาย"
+      >
+        {appointmentCardDetails && (
+          <div className="p-6 bg-white rounded-lg shadow-md max-w-sm mx-auto my-4 border-t-4 border-stromboli-400">
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-bold text-primary-default mb-2">
+                  บัตรนัดหมาย
+              </h3>
+              <p className="text-gray-600 text-sm">
+                  โปรดแสดงบัตรนี้ที่เคาน์เตอร์
+              </p>
+            </div>
+            <div className="space-y-3 text-gray-700">
+              <div className="flex justify-between items-center border-b pb-2">
+                <span className="font-semibold">HN:</span>
+                <span>{appointmentCardDetails.patient_hn}</span>
+              </div>
+              <div className="flex justify-between items-center border-b pb-2">
+                <span className="font-semibold">ผู้ป่วย:</span>
+                <span>
+                  {appointmentCardDetails.patient_first_name}
+                  {appointmentCardDetails.patient_last_name}
+                </span>
+              </div>
+              <div className="flex justify-between items-center border-b pb-2">
+                <span className="font-semibold">บริการ:</span>
+                <span>{appointmentCardDetails.service_name}</span>
+              </div>
+              <div className="flex justify-between items-center border-b pb-2">
+                <span className="font-semibold">วันที่นัด:</span>
+                <span>
+                  {getFormattedDate(appointmentCardDetails.appointment_date)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center border-b pb-2">
+                <span className="font-semibold">เวลา:</span>
+                <span>
+                  {getFormattedTime(appointmentCardDetails.appointment_time)} น.
+                </span>
+              </div>
+              <div className="flex justify-between items-center border-b pb-2">
+                <span className="font-semibold">แพทย์:</span>
+                <span>{appointmentCardDetails.doctor_full_name || "-"}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="font-semibold">ห้องตรวจ:</span>
+                <span>{appointmentCardDetails.room_name || "-"}</span>
+              </div>
+            </div>
+            <div className="mt-8 text-center text-sm text-gray-500">
+              <p>โปรดมาถึงคลินิกก่อนเวลานัด 15 นาที</p>
+              <p className="font-bold text-gray-600 mt-2">
+                  คลินิกนรีเวชวิวัฒน์
+              </p>
+            </div>
+          </div>
+        )}
+      </Popup>
         </div>
       )}
     </div>
